@@ -7,27 +7,22 @@ or FITNESS FOR A PARTICULAR PURPOSE.
 Written by oohansen@gmail.com
 *****************************************************************************/
 
+using DirectShowLib;
+using SharpOSC;
 using System;
-using System.Drawing;
-using System.Collections;
-using System.ComponentModel;
-using System.Windows.Forms;
-using System.Data;
 using System.Runtime.InteropServices;
 using System.Threading;
-
-using SharpOSC;
-using DirectShowLib;
+using System.Windows.Forms;
 
 namespace TheOneCameraControl
 {
 
-	public class Form1 : System.Windows.Forms.Form
-	{
-		private ComboBox comboDevice;
-		private Button buttonDump;
-		private Button buttonStopServer;
-		private Button buttonStartServer;
+    public class Form1 : System.Windows.Forms.Form
+    {
+        private ComboBox comboDevice;
+        private Button buttonDump;
+        private Button buttonStopServer;
+        private Button buttonStartServer;
         private Button buttonUp;
         private Button buttonDown;
         private Button buttonLeft;
@@ -55,91 +50,91 @@ namespace TheOneCameraControl
         /// </summary>
         private System.ComponentModel.Container components = null;
 
-		//A (modified) definition of OleCreatePropertyFrame found here: http://groups.google.no/group/microsoft.public.dotnet.languages.csharp/browse_thread/thread/db794e9779144a46/55dbed2bab4cd772?lnk=st&q=[DllImport(%22olepro32.dll%22)]&rnum=1&hl=no#55dbed2bab4cd772
-		[DllImport("oleaut32.dll", CharSet=CharSet.Unicode, ExactSpelling=true)]
-		public static extern int OleCreatePropertyFrame( 
-			IntPtr hwndOwner, 
-			int x, 
-			int y, 
-			[MarshalAs(UnmanagedType.LPWStr)] string lpszCaption, 
-			int cObjects, 
-			[MarshalAs(UnmanagedType.Interface, ArraySubType=UnmanagedType.IUnknown)] 
-			ref object ppUnk, 
-			int cPages, 
-			IntPtr lpPageClsID, 
-			int lcid, 
-			int dwReserved, 
-			IntPtr lpvReserved);
+        //A (modified) definition of OleCreatePropertyFrame found here: http://groups.google.no/group/microsoft.public.dotnet.languages.csharp/browse_thread/thread/db794e9779144a46/55dbed2bab4cd772?lnk=st&q=[DllImport(%22olepro32.dll%22)]&rnum=1&hl=no#55dbed2bab4cd772
+        [DllImport("oleaut32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        public static extern int OleCreatePropertyFrame(
+            IntPtr hwndOwner,
+            int x,
+            int y,
+            [MarshalAs(UnmanagedType.LPWStr)] string lpszCaption,
+            int cObjects,
+            [MarshalAs(UnmanagedType.Interface, ArraySubType=UnmanagedType.IUnknown)]
+            ref object ppUnk,
+            int cPages,
+            IntPtr lpPageClsID,
+            int lcid,
+            int dwReserved,
+            IntPtr lpvReserved);
 
-   		    public IBaseFilter theDevice = null;
-            public string theDevicePath = "";
-            CameraControl camControl = null;
-            
+        public IBaseFilter theDevice = null;
+        public string theDevicePath = "";
+        CameraControl camControl = null;
 
-		public Form1()
-		{
-			//
-			// Required for Windows Form Designer support
-			//
-			InitializeComponent();
 
-			//
-			// TODO: Add any constructor code after InitializeComponent call
-			//
+        public Form1()
+        {
+            //
+            // Required for Windows Form Designer support
+            //
+            InitializeComponent();
 
-			//enumerate Video Input filters and add them to comboDevice
-			foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
-                
-			{
-				object source = null;
-             
-				try
-				{
-					Guid iid = typeof(IBaseFilter).GUID;
-					device.Mon.BindToObject(null, null, ref iid, out source);
-				}
-				catch (Exception ex)
-				{
-					continue;
-				}
+            //
+            // TODO: Add any constructor code after InitializeComponent call
+            //
+
+            //enumerate Video Input filters and add them to comboDevice
+            foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
+
+            {
+                object source = null;
+
+                try
+                {
+                    Guid iid = typeof(IBaseFilter).GUID;
+                    device.Mon.BindToObject(null, null, ref iid, out source);
+                }
+                catch (Exception ex)
+                {
+                    continue;
+                }
                 comboDevice.Items.Add(device.DevicePath);
                 theDevice = (IBaseFilter)source;
                 theDevicePath = device.DevicePath;
                 //break;
             }
 
-			//Select first combobox item
-			if (comboDevice.Items.Count > 0)
-			{
-				comboDevice.SelectedIndex = 0;
-			}
+            //Select first combobox item
+            if (comboDevice.Items.Count > 0)
+            {
+                comboDevice.SelectedIndex = 0;
+            }
 
             //StartServer();
-            
+
         }
 
         /// <summary>
         /// Clean up any resources being used.
         /// </summary>
-        protected override void Dispose( bool disposing )
-		{
-			if( disposing )
-			{
-				if (components != null) 
-				{
-					components.Dispose();
-				}
-			}
-			base.Dispose( disposing );
-		}
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+            }
+            base.Dispose(disposing);
+        }
 
-		#region Windows Form Designer generated code
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-		private void InitializeComponent()
-		{
+        #region Windows Form Designer generated code
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.comboDevice = new System.Windows.Forms.ComboBox();
             this.buttonDump = new System.Windows.Forms.Button();
@@ -427,16 +422,16 @@ namespace TheOneCameraControl
             this.ResumeLayout(false);
             this.PerformLayout();
 
-		}
-		#endregion
+        }
+        #endregion
 
-		/// <summary>
-		/// The main entry point for the application.
-		/// </summary>
-		[STAThread]
-		static void Main() 
-		{
-  
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+
 
             Application.Run(new Form1());
 
@@ -444,40 +439,40 @@ namespace TheOneCameraControl
         }
 
         public void StopServer()
-		{
+        {
             buttonStartServer.Enabled = true;
             buttonStopServer.Enabled = false;
             textPort.Enabled = true;
-            if(camControl != null)
+            if (camControl != null)
                 camControl.stop();
             return;
-		}
+        }
 
-		public void StartServer()
-		{
+        public void StartServer()
+        {
             buttonStartServer.Enabled = false;
             buttonStopServer.Enabled = true;
             textPort.Enabled = false;
-            camControl = new CameraControl(int.Parse(this.textPort.Text),this);
+            camControl = new CameraControl(int.Parse(this.textPort.Text), this);
 
             return;
-		}
+        }
 
         private IBaseFilter CreateFilter(Guid category, string dpath)
-		{
-			object source = null;
-			Guid iid = typeof(IBaseFilter).GUID;
-			foreach (DsDevice device in DsDevice.GetDevicesOfCat(category))
-			{
-				if (device.DevicePath.CompareTo(dpath) == 0)
-				{
-					device.Mon.BindToObject(null, null, ref iid, out source);
-					break;
-				}
-			}
+        {
+            object source = null;
+            Guid iid = typeof(IBaseFilter).GUID;
+            foreach (DsDevice device in DsDevice.GetDevicesOfCat(category))
+            {
+                if (device.DevicePath.CompareTo(dpath) == 0)
+                {
+                    device.Mon.BindToObject(null, null, ref iid, out source);
+                    break;
+                }
+            }
 
-			return (IBaseFilter)source;
-		}
+            return (IBaseFilter)source;
+        }
 
         private void dumpAll()
         {
@@ -510,7 +505,8 @@ namespace TheOneCameraControl
                         out int min, out int max, out int steppingDelta,
                         out int defaultValue, out var flags);
 
-                    if (result == 0) {
+                    if (result == 0)
+                    {
                         Console.WriteLine($"Property: {i}, min: {min}, max: {max}, steppingDelta: {steppingDelta}");
                         Console.WriteLine($"defaultValue: {defaultValue}, flags: {flags}\n");
 
@@ -525,74 +521,74 @@ namespace TheOneCameraControl
         }
 
         private void dumpSettings()
-		{
-			object source = null;
-			IBaseFilter idevice = null;
-			//var cameraControl = null;
-			Guid iid = typeof(IBaseFilter).GUID;
-			foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
-			{
-				try
-				{
-					device.Mon.BindToObject(null, null, ref iid, out source);
-				}
-				catch(Exception ex)
+        {
+            object source = null;
+            IBaseFilter idevice = null;
+            //var cameraControl = null;
+            Guid iid = typeof(IBaseFilter).GUID;
+            foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
+            {
+                try
                 {
-					Console.WriteLine($"device failed: {device.Name}:");
-					//Console.WriteLine(ex.ToString());
-					continue;
+                    device.Mon.BindToObject(null, null, ref iid, out source);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"device failed: {device.Name}:");
+                    //Console.WriteLine(ex.ToString());
+                    continue;
                 }
 
-				idevice = (IBaseFilter)source;
-				var cameraControl = idevice as IAMCameraControl;
-				if (cameraControl == null) continue;
+                idevice = (IBaseFilter)source;
+                var cameraControl = idevice as IAMCameraControl;
+                if (cameraControl == null) continue;
 
-				Console.WriteLine($"device: {device.Name}:");
-				foreach (CameraControlProperty i in Enum.GetValues(typeof(CameraControlProperty)))
-				{
-					cameraControl.GetRange(i,
-						out int min, out int max, out int steppingDelta,
-						out int defaultValue, out var flags);
+                Console.WriteLine($"device: {device.Name}:");
+                foreach (CameraControlProperty i in Enum.GetValues(typeof(CameraControlProperty)))
+                {
+                    cameraControl.GetRange(i,
+                        out int min, out int max, out int steppingDelta,
+                        out int defaultValue, out var flags);
 
-					Console.WriteLine($"Property: {i}, min: {min}, max: {max}, steppingDelta: {steppingDelta}");
-					Console.WriteLine($"defaultValue: {defaultValue}, flags: {flags}\n");
+                    Console.WriteLine($"Property: {i}, min: {min}, max: {max}, steppingDelta: {steppingDelta}");
+                    Console.WriteLine($"defaultValue: {defaultValue}, flags: {flags}\n");
 
-					cameraControl.Get(i, out int value, out var flags2);
-					Console.WriteLine($"currentValue: {value}, flags: {flags2}\n");
+                    cameraControl.Get(i, out int value, out var flags2);
+                    Console.WriteLine($"currentValue: {value}, flags: {flags2}\n");
 
-				}
-				Console.WriteLine("-----------------------");
+                }
+                Console.WriteLine("-----------------------");
 
 
-			}
-		}
+            }
+        }
 
-		private void buttonDump_Click(object sender, System.EventArgs e)
-		{
-			dumpAll();
-		}
+        private void buttonDump_Click(object sender, System.EventArgs e)
+        {
+            dumpAll();
+        }
 
-		private void buttonStartServer_Click(object sender, System.EventArgs e)
-		{
-			StartServer();
-		}
+        private void buttonStartServer_Click(object sender, System.EventArgs e)
+        {
+            StartServer();
+        }
 
-		private void buttonStopServer_Click(object sender, System.EventArgs e)
-		{
-			StopServer();
-		}
+        private void buttonStopServer_Click(object sender, System.EventArgs e)
+        {
+            StopServer();
+        }
 
-		private void comboDevice_SelectedIndexChanged(object sender, System.EventArgs e)
-		{
-			//Release COM objects
-			if (theDevice != null)
-			{
-				Marshal.ReleaseComObject(theDevice);
-				theDevice = null;
-			}
-			//Create the filter for the selected video input device
-			string devicepath = comboDevice.SelectedItem.ToString();
-			theDevice = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
+        private void comboDevice_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            //Release COM objects
+            if (theDevice != null)
+            {
+                Marshal.ReleaseComObject(theDevice);
+                theDevice = null;
+            }
+            //Create the filter for the selected video input device
+            string devicepath = comboDevice.SelectedItem.ToString();
+            theDevice = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
             theDevicePath = devicepath;
         }
 
@@ -614,11 +610,11 @@ namespace TheOneCameraControl
 
         private void buttonDown_Click(object sender, EventArgs e)
         {
-			var cameraControl = theDevice as IAMCameraControl;
-			if (cameraControl == null) return;
+            var cameraControl = theDevice as IAMCameraControl;
+            if (cameraControl == null) return;
 
-			cameraControl.Get(CameraControlProperty.Tilt, out int value, out var flags);
-			cameraControl.Set(CameraControlProperty.Tilt, value+10, CameraControlFlags.Manual);
+            cameraControl.Get(CameraControlProperty.Tilt, out int value, out var flags);
+            cameraControl.Set(CameraControlProperty.Tilt, value + 10, CameraControlFlags.Manual);
             Console.WriteLine($"Property: {CameraControlProperty.Tilt}, value: {value}");
         }
 
@@ -633,68 +629,68 @@ namespace TheOneCameraControl
 
         private void buttonLeft_Click(object sender, EventArgs e)
         {
-			var cameraControl = theDevice as IAMCameraControl;
-			if (cameraControl == null) return;
+            var cameraControl = theDevice as IAMCameraControl;
+            if (cameraControl == null) return;
 
-			cameraControl.Get(CameraControlProperty.Pan, out int value, out var flags);
-			cameraControl.Set(CameraControlProperty.Pan, value-10, CameraControlFlags.Manual);
+            cameraControl.Get(CameraControlProperty.Pan, out int value, out var flags);
+            cameraControl.Set(CameraControlProperty.Pan, value - 10, CameraControlFlags.Manual);
             Console.WriteLine($"Property: {CameraControlProperty.Pan}, value: {value}");
         }
 
-		private void buttonRight_Click(object sender, EventArgs e)
+        private void buttonRight_Click(object sender, EventArgs e)
         {
-			var cameraControl = theDevice as IAMCameraControl;
-			if (cameraControl == null) return;
+            var cameraControl = theDevice as IAMCameraControl;
+            if (cameraControl == null) return;
 
-			cameraControl.Get(CameraControlProperty.Pan, out int value, out var flags);
-			cameraControl.Set(CameraControlProperty.Pan, value+10, CameraControlFlags.Manual);
+            cameraControl.Get(CameraControlProperty.Pan, out int value, out var flags);
+            cameraControl.Set(CameraControlProperty.Pan, value + 10, CameraControlFlags.Manual);
             Console.WriteLine($"Property: {CameraControlProperty.Pan}, value: {value}");
         }
 
-     
+
 
         private void buttonZoomIn_Click(object sender, EventArgs e)
         {
-			var cameraControl = theDevice as IAMCameraControl;
-			if (cameraControl == null) return;
+            var cameraControl = theDevice as IAMCameraControl;
+            if (cameraControl == null) return;
 
-			cameraControl.Get(CameraControlProperty.Zoom, out int value, out var flags);
-			cameraControl.Set(CameraControlProperty.Zoom, value + 10, CameraControlFlags.Manual);
+            cameraControl.Get(CameraControlProperty.Zoom, out int value, out var flags);
+            cameraControl.Set(CameraControlProperty.Zoom, value + 10, CameraControlFlags.Manual);
             Console.WriteLine($"Property: {CameraControlProperty.Zoom}, value: {value}");
 
         }
 
-		private void buttonZoomOut_Click(object sender, EventArgs e)
+        private void buttonZoomOut_Click(object sender, EventArgs e)
         {
-			var cameraControl = theDevice as IAMCameraControl;
-			if (cameraControl == null) return;
+            var cameraControl = theDevice as IAMCameraControl;
+            if (cameraControl == null) return;
 
-			cameraControl.Get(CameraControlProperty.Zoom, out int value, out var flags);
-			cameraControl.Set(CameraControlProperty.Zoom, value - 10, CameraControlFlags.Manual);
+            cameraControl.Get(CameraControlProperty.Zoom, out int value, out var flags);
+            cameraControl.Set(CameraControlProperty.Zoom, value - 10, CameraControlFlags.Manual);
             Console.WriteLine($"Property: {CameraControlProperty.Zoom}, value: {value}");
 
         }
 
         private void buttonCenter_Click(object sender, EventArgs e)
         {
-			var cameraControl = theDevice as IAMCameraControl;
-			if (cameraControl == null) return;
+            var cameraControl = theDevice as IAMCameraControl;
+            if (cameraControl == null) return;
 
-			cameraControl.GetRange(CameraControlProperty.Pan,
-				out int min, out int max, out int steppingDelta,
-				out int defaultValue, out var flags);
-			cameraControl.Set(CameraControlProperty.Pan, 0, CameraControlFlags.Manual);
+            cameraControl.GetRange(CameraControlProperty.Pan,
+                out int min, out int max, out int steppingDelta,
+                out int defaultValue, out var flags);
+            cameraControl.Set(CameraControlProperty.Pan, 0, CameraControlFlags.Manual);
 
-			cameraControl.GetRange(CameraControlProperty.Tilt,
-				out min, out max, out steppingDelta,
-				out defaultValue, out flags);
-			cameraControl.Set(CameraControlProperty.Tilt, defaultValue, CameraControlFlags.Manual);
+            cameraControl.GetRange(CameraControlProperty.Tilt,
+                out min, out max, out steppingDelta,
+                out defaultValue, out flags);
+            cameraControl.Set(CameraControlProperty.Tilt, defaultValue, CameraControlFlags.Manual);
 
-			cameraControl.GetRange(CameraControlProperty.Zoom,
-				out min, out max, out steppingDelta,
-				out defaultValue, out flags);
-			cameraControl.Set(CameraControlProperty.Zoom, defaultValue, CameraControlFlags.Manual);
-		}
+            cameraControl.GetRange(CameraControlProperty.Zoom,
+                out min, out max, out steppingDelta,
+                out defaultValue, out flags);
+            cameraControl.Set(CameraControlProperty.Zoom, defaultValue, CameraControlFlags.Manual);
+        }
 
         private void buttonUpLimit_Click(object sender, EventArgs e)
         {
@@ -720,7 +716,7 @@ namespace TheOneCameraControl
         }
 
         private void buttonLeftLimit_Click(object sender, EventArgs e)
-		{
+        {
             var cameraControl = theDevice as IAMCameraControl;
             if (cameraControl == null) return;
 
@@ -842,7 +838,43 @@ namespace TheOneCameraControl
         private IAMCameraControl cameraControl = null;
         private int lastX = 0;
         private int lastY = 0;
+        private int lastZ = 0;
+        private int lastPan = 0;
+        private int lastTilt = 0;
         private int lastZoom = 0;
+        private int lastExposure = 0;
+        private int lastFocus = 0;
+
+        private int destPan = 0;
+        private int destTilt = 0;
+        private int destZoom = 0;
+
+        private long startPanTicks = 0;
+        private long startTiltTicks = 0;
+        private long startZoomTicks = 0;
+
+        private long stopPanTicks = 0;
+        private long stopTiltTicks = 0;
+        private long stopZoomTicks = 0;
+
+        private int panAmount = 0;
+        private int tiltAmount = 0;
+        private int zoomAmount = 0;
+
+        private int movementSpeed = 30;
+
+        private int panSpeed = 15;
+        private int tiltSpeed = 15;
+        private int zoomSpeed = 15;
+
+        private bool stopPan = false;
+        private bool stopTilt = false;
+        private bool stopZoom = false;
+
+        private bool zoomIn = false;
+
+        private bool gotoActive = false;
+
         private Form1 _parent = null;
         private UDPListener _listener = null;
 
@@ -859,7 +891,7 @@ namespace TheOneCameraControl
             };
 
             _listener = new UDPListener(port, callback);
-            
+
         }
 
         public void stop()
@@ -893,10 +925,15 @@ namespace TheOneCameraControl
                 theDevice = (IBaseFilter)source;
                 cameraControl = theDevice as IAMCameraControl;
                 isSetup = true;
+
+                Thread workerThread = new Thread(new ThreadStart(cameraControlLoop));
+                // Start secondary thread
+                workerThread.Start();
             }
-            else if(cameraControl != null) {
+            else if (cameraControl != null)
+            {
                 string address = message.Address;
-                if (address == "/XY")
+                if (address == "/FLYXY")
                 {
                     int valueX = (int)message.Arguments[0];
                     int valueY = ((int)message.Arguments[1]) * -1;
@@ -908,43 +945,337 @@ namespace TheOneCameraControl
 
                     lastX = valueX;
                     lastY = valueY;
-                    _parent.textLastMessage.Invoke((MethodInvoker)delegate {
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
                         _parent.textLastMessage.Text = $"{address} {lastX} {lastY}";
                     });
+                }
+                else if (address == "/FLYZ")
+                {
+                    int valueZ = (int)message.Arguments[0];
+
+                    if (lastZ != valueZ)
+                        cameraControl.Set((CameraControlProperty)13, valueZ, CameraControlFlags.Manual);
+
+                    lastZ = valueZ;
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"{address} {lastZ}";
+                    });
+
+                }
+                else if (address == "/PAN")
+                {
+                    int valuePan = (int)message.Arguments[0];
+
+                    //if (lastPan != valuePan)
+                    cameraControl.Set(CameraControlProperty.Pan, valuePan, CameraControlFlags.Manual);
+
+                    lastPan = valuePan;
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"{address} {lastPan}";
+                    });
+
+                }
+                else if (address == "/TILT")
+                {
+                    int valueTilt = (int)message.Arguments[0];
+
+                    //if (lastTilt != valueTilt)
+                    cameraControl.Set(CameraControlProperty.Tilt, valueTilt, CameraControlFlags.Manual);
+
+                    lastTilt = valueTilt;
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"{address} {lastTilt}";
+                    });
+
                 }
                 else if (address == "/ZOOM")
                 {
                     int valueZoom = (int)message.Arguments[0];
 
-                    if (lastZoom != valueZoom)
-                        cameraControl.Set((CameraControlProperty)13, valueZoom, CameraControlFlags.Manual);
+                    //if (lastZoom != valueZoom)
+                    cameraControl.Set(CameraControlProperty.Zoom, valueZoom, CameraControlFlags.Manual);
 
                     lastZoom = valueZoom;
-                    _parent.textLastMessage.Invoke((MethodInvoker)delegate {
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
                         _parent.textLastMessage.Text = $"{address} {lastZoom}";
                     });
 
+                }
+                else if (address == "/PTZS")
+                {
+                    destPan = (int)message.Arguments[0];
+                    destTilt = (int)message.Arguments[1];
+                    destZoom = (int)message.Arguments[2];
+                    movementSpeed = (int)message.Arguments[3];
+
+                    panSpeed = movementSpeed;
+                    tiltSpeed = movementSpeed;
+                    zoomSpeed = movementSpeed;
+
+                    //Thread ptzThread = new Thread(new ThreadStart(doPTZ));
+                    // Start secondary thread
+                    //ptzThread.Start();
+
+                    //if (lastZoom != valueZoom)
+                    //cameraControl.Set(CameraControlProperty.Pan, valuePan, CameraControlFlags.Manual);
+                    //cameraControl.Set(CameraControlProperty.Tilt, valueTilt, CameraControlFlags.Manual);
+                    //cameraControl.Set(CameraControlProperty.Zoom, valueZoom, CameraControlFlags.Manual);
+                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+
+                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} \n");
+
+                    panAmount = Math.Abs(currentPan - destPan);
+                    tiltAmount = Math.Abs(currentTilt - destTilt);
+                    zoomAmount = Math.Abs(currentZoom - destZoom);
+
+                    Console.WriteLine($"PTZ Distance to move: {panAmount} {tiltAmount} {zoomAmount} \n");
+
+                    // Left      Right
+                    // -130 <--> 130
+
+                    // Up    Down
+                    // -90   90
+
+                    // At speed of 20
+
+                    //
+                    //float movementSpeedFloat = (float)movementSpeed;
+                    //float panAmountFloat = (float)panAmount;
+
+                    int estPanTime = (int)(panAmount / (movementSpeed / 1000.0f));
+                    int estTiltTime = (int)(tiltAmount / (movementSpeed / 1000.0f));
+                    int estZoomTime = (int)(zoomAmount / (movementSpeed / 1000.0f));
+
+                    Console.WriteLine($"Time estimates: {estPanTime} {estTiltTime} {estZoomTime} \n");
+
+                    if(estPanTime >= estTiltTime && estPanTime >= estZoomTime)
+                    {
+                        tiltSpeed = ((int)(((float)tiltAmount /(float)estPanTime) * 1000.0f));
+                        zoomSpeed = ((int)(((float)zoomAmount /(float)estPanTime) * 1000.0f));
+                        Console.WriteLine($"Pan Time Longest: tiltSpeed: {tiltSpeed} zoomSpeed {zoomSpeed} \n");
+                    }
+                    else if(estTiltTime >= estPanTime && estTiltTime >= estZoomTime)
+                    {
+                        panSpeed = ((int)(((float)panAmount / (float)estTiltTime) * 1000.0f));
+                        zoomSpeed = ((int)(((float)zoomAmount / (float)estTiltTime) * 1000.0f));
+                        Console.WriteLine($"Tilt Time Longest: panSpeed: {panSpeed} zoomSpeed {zoomSpeed} \n");
+                    }
+                    else if(estZoomTime >= estPanTime && estZoomTime >= estTiltTime)
+                    {
+                        panSpeed = ((int)(((float)panAmount / (float)estZoomTime) * 1000.0f));
+                        tiltSpeed = ((int)(((float)tiltAmount / (float)estZoomTime) * 1000.0f));
+                        Console.WriteLine($"Zoom Time Longest: panSpeed: {panSpeed} tiltSpeed {tiltSpeed} \n");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"This should never happen");
+                    }
+
+                    Console.WriteLine($"Pre calc Speeds: {panSpeed} {tiltSpeed} {zoomSpeed}");
+
+                    if (currentPan < destPan)
+                    {
+                        panSpeed *= -1;
+                    }
+
+                    if (currentTilt < destTilt)
+                    {
+                        tiltSpeed *= -1;
+                    }
+
+                    if (currentZoom > destZoom)
+                    {
+                        zoomSpeed *= -1;
+                    }
+
+                    Console.WriteLine($"Speeds: {panSpeed} {tiltSpeed} {zoomSpeed}");
+
+                    if (panAmount > 5)
+                    {
+                        gotoActive = true;
+                        startPanTicks = DateTime.UtcNow.Ticks;
+                        //Console.WriteLine($"Start pan time: {startPanTicks}");
+                        cameraControl.Set((CameraControlProperty)10, panSpeed, CameraControlFlags.Manual);
+                    }
+
+                    if (tiltAmount > 5)
+                    {
+                        gotoActive = true;
+                        startTiltTicks = DateTime.UtcNow.Ticks;
+                        //Console.WriteLine($"Start tilt time: {startTiltTicks}");
+                        cameraControl.Set((CameraControlProperty)11, tiltSpeed, CameraControlFlags.Manual);
+                    }
+
+                    if (zoomAmount > 5)
+                    {
+                        gotoActive = true;
+                        startZoomTicks = DateTime.UtcNow.Ticks;
+                        //Console.WriteLine($"Start zoom time: {startZoomTicks}");
+                        cameraControl.Set((CameraControlProperty)13, zoomSpeed, CameraControlFlags.Manual);
+                    }
+
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"PTZ:  {destPan} {destTilt} {destZoom}";
+                    });
+                }
+                else if (address == "/FOCUS")
+                {
+                    int valueFocus = (int)message.Arguments[0];
+
+                    if (lastFocus != valueFocus)
+                        cameraControl.Set(CameraControlProperty.Focus, valueFocus, CameraControlFlags.Manual);
+
+                    lastFocus = valueFocus;
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"{address} {lastFocus}";
+                    });
+
+                }
+                else if (address == "/EXPOSURE")
+                {
+                    int valueExposure = (int)message.Arguments[0];
+
+                    if (lastExposure != valueExposure)
+                        cameraControl.Set(CameraControlProperty.Exposure, valueExposure, CameraControlFlags.Manual);
+
+                    lastExposure = valueExposure;
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"{address} {lastExposure}";
+                    });
+
+                }
+                else if (address == "/TRACKING")
+                {
+                    int valueExposure = (int)message.Arguments[0];
+
+                    if (lastExposure != valueExposure)
+                        cameraControl.Set(CameraControlProperty.Exposure, valueExposure, CameraControlFlags.Manual);
+
+                    lastExposure = valueExposure;
+                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    {
+                        _parent.textLastMessage.Text = $"{address} {lastExposure}";
+                    });
+
+                }
+                else if (address == "/GetPosition")
+                {
+                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+
+                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} \n");
                 }
 
             }
         }
 
-        public void OSCThread()
+        public void cameraControlLoop()
         {
+            long lastTimeStamp = DateTime.UtcNow.Ticks;
             try
             {
+                while (true)
+                {
+                    lastTimeStamp = DateTime.UtcNow.Ticks;
+                    if (gotoActive)
+                    {
+                        cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+                        cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+                        cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
 
-            }
-            catch (Exception ex)
-            {
-                // log errors
-            }
+                        if (!stopPan && panSpeed < 0 && currentPan >= destPan)
+                        {
+                            Console.WriteLine($"Stop Pan currentPan >= destPan: {currentPan} {currentTilt} {currentZoom} \n");
+                            stopPanTicks = DateTime.UtcNow.Ticks;
+                            stopPan = true;
+                        }
+                        else if (!stopPan && panSpeed >= 0 && currentPan <= destPan)
+                        {
+                            Console.WriteLine($"Stop Pan currentPan >= destPan: {currentPan} {currentTilt} {currentZoom} \n");
+                            stopPanTicks = DateTime.UtcNow.Ticks;
+                            stopPan = true;
+                        }
 
-        }
-        public void cameraControlThread()
-        {
-            try
-            {
+                        if (!stopTilt && tiltSpeed < 0 && currentTilt >= destTilt)
+                        {
+                            Console.WriteLine($"Stop Tilt currentTilt <= destTilt: {currentPan} {currentTilt} {currentZoom} \n");
+                            stopTiltTicks = DateTime.UtcNow.Ticks;
+                            stopTilt = true;
+                        }
+                        else if (!stopTilt && tiltSpeed >= 0 && currentTilt <= destTilt)
+                        {
+                            Console.WriteLine($"Stop Tilt currentTilt >= destTilt: {currentPan} {currentTilt} {currentZoom} \n");
+                            stopTiltTicks = DateTime.UtcNow.Ticks;
+                            stopTilt = true;
+                        }
+
+                        if (!stopZoom && zoomSpeed < 0 && (currentZoom <= destZoom || currentZoom <= 0))
+                        {
+                            Console.WriteLine($"Stop Zoom currentZoom <= destZoom: {destZoom} {currentZoom} {zoomSpeed}\n");
+                            stopZoomTicks = DateTime.UtcNow.Ticks;
+                            stopZoom = true;
+                        }
+                        else if (!stopZoom && zoomSpeed >= 0 && (currentZoom >= destZoom || currentZoom >= 100))
+                        {
+                            Console.WriteLine($"Stop Zoom currentZoom >= destZoom: {destZoom} {currentZoom} {zoomSpeed} \n");
+                            stopZoomTicks = DateTime.UtcNow.Ticks;
+                            stopZoom = true;
+                        }
+
+                        if (stopPan)
+                            cameraControl.Set((CameraControlProperty)10, 0, CameraControlFlags.Manual);
+                        if (stopTilt)
+                            cameraControl.Set((CameraControlProperty)11, 0, CameraControlFlags.Manual);
+                        if (stopZoom)
+                            cameraControl.Set((CameraControlProperty)13, 0, CameraControlFlags.Manual);
+                        
+
+                        /*if (stopPan || stopTilt || stopZoom)
+                        {
+                            cameraControl.Set((CameraControlProperty)10, 0, CameraControlFlags.Manual);
+                            cameraControl.Set((CameraControlProperty)11, 0, CameraControlFlags.Manual);
+                            cameraControl.Set((CameraControlProperty)13, 0, CameraControlFlags.Manual);
+                        }
+                        */
+
+                        if (stopPan && stopTilt && stopZoom)
+                        {
+                            gotoActive = false;
+                            stopPan = false;
+                            stopTilt = false;
+                            stopZoom = false;
+
+                            float panTimeMS = (stopPanTicks - startPanTicks) / 10000;
+                            float tiltTimeMS = (stopTiltTicks - startTiltTicks) / 10000;
+                            float zoomTimeMS = (stopZoomTicks - startZoomTicks) / 10000;
+
+
+                            float panPerMS = (float)panAmount / panTimeMS;
+                            float tiltPerMS = (float)tiltAmount / tiltTimeMS;
+                            float zoomPerMS = (float)zoomAmount / zoomTimeMS;
+
+                            Console.WriteLine($"Done Moving Speeds: panTime: {panTimeMS} tiltTime: {tiltTimeMS} zoomTime: {zoomTimeMS}");
+                            Console.WriteLine($"Speed per unit: pan: {panPerMS:0.0000} tilt: {tiltPerMS:0.0000} zoom: {zoomPerMS:0.0000}");
+                        }
+
+                        //Console.WriteLine($"PTZ: {currentPan} {currentTilt} {currentZoom} \n");
+                    }
+
+
+                    Thread.Sleep(1);
+                    //Console.WriteLine($"Ticks per loop: {DateTime.UtcNow.Ticks - lastTimeStamp}");
+                }
 
             }
             catch (Exception ex)
