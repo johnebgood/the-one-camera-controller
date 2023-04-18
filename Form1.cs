@@ -13,6 +13,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using System.Net.Sockets;
+using System.Text;
 
 namespace TheOneCameraControl
 {
@@ -166,197 +168,197 @@ namespace TheOneCameraControl
             // comboDevice
             // 
             this.comboDevice.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboDevice.Location = new System.Drawing.Point(13, 12);
+            this.comboDevice.Location = new System.Drawing.Point(8, 8);
             this.comboDevice.Name = "comboDevice";
-            this.comboDevice.Size = new System.Drawing.Size(409, 28);
+            this.comboDevice.Size = new System.Drawing.Size(256, 21);
             this.comboDevice.TabIndex = 0;
             this.comboDevice.SelectedIndexChanged += new System.EventHandler(this.comboDevice_SelectedIndexChanged);
             // 
             // buttonDump
             // 
-            this.buttonDump.Location = new System.Drawing.Point(435, 12);
+            this.buttonDump.Location = new System.Drawing.Point(272, 8);
             this.buttonDump.Name = "buttonDump";
-            this.buttonDump.Size = new System.Drawing.Size(192, 35);
+            this.buttonDump.Size = new System.Drawing.Size(120, 24);
             this.buttonDump.TabIndex = 2;
             this.buttonDump.Text = "Dump Settings";
             this.buttonDump.Click += new System.EventHandler(this.buttonDump_Click);
             // 
             // buttonStopServer
             // 
-            this.buttonStopServer.Location = new System.Drawing.Point(13, 607);
+            this.buttonStopServer.Location = new System.Drawing.Point(8, 415);
             this.buttonStopServer.Name = "buttonStopServer";
-            this.buttonStopServer.Size = new System.Drawing.Size(176, 33);
+            this.buttonStopServer.Size = new System.Drawing.Size(110, 23);
             this.buttonStopServer.TabIndex = 4;
             this.buttonStopServer.Text = "Stop OSC Server";
             this.buttonStopServer.Click += new System.EventHandler(this.buttonStopServer_Click);
             // 
             // buttonStartServer
             // 
-            this.buttonStartServer.Location = new System.Drawing.Point(13, 559);
+            this.buttonStartServer.Location = new System.Drawing.Point(8, 382);
             this.buttonStartServer.Name = "buttonStartServer";
-            this.buttonStartServer.Size = new System.Drawing.Size(178, 33);
+            this.buttonStartServer.Size = new System.Drawing.Size(111, 23);
             this.buttonStartServer.TabIndex = 5;
             this.buttonStartServer.Text = "Start OSC Server";
             this.buttonStartServer.Click += new System.EventHandler(this.buttonStartServer_Click);
             // 
             // buttonUp
             // 
-            this.buttonUp.Location = new System.Drawing.Point(248, 110);
+            this.buttonUp.Location = new System.Drawing.Point(155, 75);
             this.buttonUp.Name = "buttonUp";
-            this.buttonUp.Size = new System.Drawing.Size(192, 35);
+            this.buttonUp.Size = new System.Drawing.Size(120, 24);
             this.buttonUp.TabIndex = 7;
             this.buttonUp.Text = "Up";
             this.buttonUp.Click += new System.EventHandler(this.buttonUp_Click);
             // 
             // buttonDown
             // 
-            this.buttonDown.Location = new System.Drawing.Point(248, 278);
+            this.buttonDown.Location = new System.Drawing.Point(155, 190);
             this.buttonDown.Name = "buttonDown";
-            this.buttonDown.Size = new System.Drawing.Size(192, 35);
+            this.buttonDown.Size = new System.Drawing.Size(120, 24);
             this.buttonDown.TabIndex = 8;
             this.buttonDown.Text = "Down";
             this.buttonDown.Click += new System.EventHandler(this.buttonDown_Click);
             // 
             // buttonLeft
             // 
-            this.buttonLeft.Location = new System.Drawing.Point(173, 196);
+            this.buttonLeft.Location = new System.Drawing.Point(108, 134);
             this.buttonLeft.Name = "buttonLeft";
-            this.buttonLeft.Size = new System.Drawing.Size(70, 35);
+            this.buttonLeft.Size = new System.Drawing.Size(44, 24);
             this.buttonLeft.TabIndex = 9;
             this.buttonLeft.Text = "Left";
             this.buttonLeft.Click += new System.EventHandler(this.buttonLeft_Click);
             // 
             // buttonRight
             // 
-            this.buttonRight.Location = new System.Drawing.Point(435, 196);
+            this.buttonRight.Location = new System.Drawing.Point(272, 134);
             this.buttonRight.Name = "buttonRight";
-            this.buttonRight.Size = new System.Drawing.Size(64, 35);
+            this.buttonRight.Size = new System.Drawing.Size(40, 24);
             this.buttonRight.TabIndex = 10;
             this.buttonRight.Text = "Right";
             this.buttonRight.Click += new System.EventHandler(this.buttonRight_Click);
             // 
             // buttonCenter
             // 
-            this.buttonCenter.Location = new System.Drawing.Point(298, 196);
+            this.buttonCenter.Location = new System.Drawing.Point(186, 134);
             this.buttonCenter.Name = "buttonCenter";
-            this.buttonCenter.Size = new System.Drawing.Size(95, 35);
+            this.buttonCenter.Size = new System.Drawing.Size(60, 24);
             this.buttonCenter.TabIndex = 13;
             this.buttonCenter.Text = "Center";
             this.buttonCenter.Click += new System.EventHandler(this.buttonCenter_Click);
             // 
             // buttonRightLimit
             // 
-            this.buttonRightLimit.Location = new System.Drawing.Point(515, 196);
+            this.buttonRightLimit.Location = new System.Drawing.Point(322, 134);
             this.buttonRightLimit.Name = "buttonRightLimit";
-            this.buttonRightLimit.Size = new System.Drawing.Size(112, 35);
+            this.buttonRightLimit.Size = new System.Drawing.Size(70, 24);
             this.buttonRightLimit.TabIndex = 14;
             this.buttonRightLimit.Text = "Right Limit";
             this.buttonRightLimit.Click += new System.EventHandler(this.buttonRightLimit_Click);
             // 
             // buttonLeftLimit
             // 
-            this.buttonLeftLimit.Location = new System.Drawing.Point(45, 196);
+            this.buttonLeftLimit.Location = new System.Drawing.Point(28, 134);
             this.buttonLeftLimit.Name = "buttonLeftLimit";
-            this.buttonLeftLimit.Size = new System.Drawing.Size(112, 35);
+            this.buttonLeftLimit.Size = new System.Drawing.Size(70, 24);
             this.buttonLeftLimit.TabIndex = 15;
             this.buttonLeftLimit.Text = "Left Limit";
             this.buttonLeftLimit.Click += new System.EventHandler(this.buttonLeftLimit_Click);
             // 
             // buttonUpLimit
             // 
-            this.buttonUpLimit.Location = new System.Drawing.Point(248, 69);
+            this.buttonUpLimit.Location = new System.Drawing.Point(155, 47);
             this.buttonUpLimit.Name = "buttonUpLimit";
-            this.buttonUpLimit.Size = new System.Drawing.Size(192, 35);
+            this.buttonUpLimit.Size = new System.Drawing.Size(120, 24);
             this.buttonUpLimit.TabIndex = 16;
             this.buttonUpLimit.Text = "Up Limit";
             this.buttonUpLimit.Click += new System.EventHandler(this.buttonUpLimit_Click);
             // 
             // buttonDownLimit
             // 
-            this.buttonDownLimit.Location = new System.Drawing.Point(248, 319);
+            this.buttonDownLimit.Location = new System.Drawing.Point(155, 218);
             this.buttonDownLimit.Name = "buttonDownLimit";
-            this.buttonDownLimit.Size = new System.Drawing.Size(192, 35);
+            this.buttonDownLimit.Size = new System.Drawing.Size(120, 24);
             this.buttonDownLimit.TabIndex = 17;
             this.buttonDownLimit.Text = "Down Limit";
             this.buttonDownLimit.Click += new System.EventHandler(this.buttonDownLimit_Click);
             // 
             // buttonZoomOutFull
             // 
-            this.buttonZoomOutFull.Location = new System.Drawing.Point(13, 487);
+            this.buttonZoomOutFull.Location = new System.Drawing.Point(8, 333);
             this.buttonZoomOutFull.Name = "buttonZoomOutFull";
-            this.buttonZoomOutFull.Size = new System.Drawing.Size(192, 35);
+            this.buttonZoomOutFull.Size = new System.Drawing.Size(120, 24);
             this.buttonZoomOutFull.TabIndex = 23;
             this.buttonZoomOutFull.Text = "Zoom Out Full";
             this.buttonZoomOutFull.Click += new System.EventHandler(this.buttonZoomOutFull_Click);
             // 
             // buttonZoomInFull
             // 
-            this.buttonZoomInFull.Location = new System.Drawing.Point(13, 353);
+            this.buttonZoomInFull.Location = new System.Drawing.Point(8, 242);
             this.buttonZoomInFull.Name = "buttonZoomInFull";
-            this.buttonZoomInFull.Size = new System.Drawing.Size(192, 35);
+            this.buttonZoomInFull.Size = new System.Drawing.Size(120, 23);
             this.buttonZoomInFull.TabIndex = 22;
             this.buttonZoomInFull.Text = "Zoom In Full";
             this.buttonZoomInFull.Click += new System.EventHandler(this.buttonZoomInFull_Click);
             // 
             // buttonZoomOut
             // 
-            this.buttonZoomOut.Location = new System.Drawing.Point(13, 446);
+            this.buttonZoomOut.Location = new System.Drawing.Point(8, 305);
             this.buttonZoomOut.Name = "buttonZoomOut";
-            this.buttonZoomOut.Size = new System.Drawing.Size(192, 35);
+            this.buttonZoomOut.Size = new System.Drawing.Size(120, 24);
             this.buttonZoomOut.TabIndex = 21;
             this.buttonZoomOut.Text = "Zoom Out";
             this.buttonZoomOut.Click += new System.EventHandler(this.buttonZoomOut_Click);
             // 
             // buttonZoomIn
             // 
-            this.buttonZoomIn.Location = new System.Drawing.Point(13, 394);
+            this.buttonZoomIn.Location = new System.Drawing.Point(8, 270);
             this.buttonZoomIn.Name = "buttonZoomIn";
-            this.buttonZoomIn.Size = new System.Drawing.Size(192, 35);
+            this.buttonZoomIn.Size = new System.Drawing.Size(120, 24);
             this.buttonZoomIn.TabIndex = 20;
             this.buttonZoomIn.Text = "Zoom In";
             this.buttonZoomIn.Click += new System.EventHandler(this.buttonZoomIn_Click);
             // 
             // buttonFastLeft
             // 
-            this.buttonFastLeft.Location = new System.Drawing.Point(475, 487);
+            this.buttonFastLeft.Location = new System.Drawing.Point(297, 333);
             this.buttonFastLeft.Name = "buttonFastLeft";
-            this.buttonFastLeft.Size = new System.Drawing.Size(165, 35);
+            this.buttonFastLeft.Size = new System.Drawing.Size(103, 24);
             this.buttonFastLeft.TabIndex = 24;
             this.buttonFastLeft.Text = "Fast 10 (-160) Left";
             this.buttonFastLeft.Click += new System.EventHandler(this.buttonFastLeft_Click);
             // 
             // buttonFastRight
             // 
-            this.buttonFastRight.Location = new System.Drawing.Point(464, 446);
+            this.buttonFastRight.Location = new System.Drawing.Point(290, 305);
             this.buttonFastRight.Name = "buttonFastRight";
-            this.buttonFastRight.Size = new System.Drawing.Size(176, 35);
+            this.buttonFastRight.Size = new System.Drawing.Size(110, 24);
             this.buttonFastRight.TabIndex = 25;
             this.buttonFastRight.Text = "Fast 10 (160) Right";
             this.buttonFastRight.Click += new System.EventHandler(this.buttonFastRight_Click);
             // 
             // buttonFastDown
             // 
-            this.buttonFastDown.Location = new System.Drawing.Point(475, 341);
+            this.buttonFastDown.Location = new System.Drawing.Point(297, 233);
             this.buttonFastDown.Name = "buttonFastDown";
-            this.buttonFastDown.Size = new System.Drawing.Size(176, 35);
+            this.buttonFastDown.Size = new System.Drawing.Size(110, 24);
             this.buttonFastDown.TabIndex = 27;
             this.buttonFastDown.Text = "Fast 11 (120) Up";
             this.buttonFastDown.Click += new System.EventHandler(this.button1_Click);
             // 
             // buttonFastUp
             // 
-            this.buttonFastUp.Location = new System.Drawing.Point(475, 382);
+            this.buttonFastUp.Location = new System.Drawing.Point(297, 261);
             this.buttonFastUp.Name = "buttonFastUp";
-            this.buttonFastUp.Size = new System.Drawing.Size(165, 35);
+            this.buttonFastUp.Size = new System.Drawing.Size(103, 24);
             this.buttonFastUp.TabIndex = 26;
             this.buttonFastUp.Text = "Fast 11 (-120) Down";
             this.buttonFastUp.Click += new System.EventHandler(this.button2_Click);
             // 
             // textPort
             // 
-            this.textPort.Location = new System.Drawing.Point(256, 562);
+            this.textPort.Location = new System.Drawing.Point(160, 385);
             this.textPort.Name = "textPort";
-            this.textPort.Size = new System.Drawing.Size(100, 26);
+            this.textPort.Size = new System.Drawing.Size(62, 20);
             this.textPort.TabIndex = 28;
             this.textPort.Text = "33333";
             this.textPort.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
@@ -364,32 +366,32 @@ namespace TheOneCameraControl
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(208, 565);
+            this.label1.Location = new System.Drawing.Point(130, 387);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(42, 20);
+            this.label1.Size = new System.Drawing.Size(29, 13);
             this.label1.TabIndex = 29;
             this.label1.Text = "Port:";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(256, 617);
+            this.label2.Location = new System.Drawing.Point(160, 422);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(113, 20);
+            this.label2.Size = new System.Drawing.Size(76, 13);
             this.label2.TabIndex = 30;
             this.label2.Text = "Last Message:";
             // 
             // textLastMessage
             // 
-            this.textLastMessage.Location = new System.Drawing.Point(375, 614);
+            this.textLastMessage.Location = new System.Drawing.Point(234, 420);
             this.textLastMessage.Name = "textLastMessage";
-            this.textLastMessage.Size = new System.Drawing.Size(279, 26);
+            this.textLastMessage.Size = new System.Drawing.Size(175, 20);
             this.textLastMessage.TabIndex = 31;
             // 
             // Form1
             // 
-            this.AutoScaleBaseSize = new System.Drawing.Size(8, 19);
-            this.ClientSize = new System.Drawing.Size(666, 652);
+            this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
+            this.ClientSize = new System.Drawing.Size(657, 671);
             this.Controls.Add(this.textLastMessage);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -723,8 +725,8 @@ namespace TheOneCameraControl
             //cameraControl.GetRange(CameraControlProperty.Pan,
             //    out int min, out int max, out int steppingDelta,
             //    out int defaultValue, out var flags);
-            cameraControl.Set((CameraControlProperty)10, 160, CameraControlFlags.Manual);
-            cameraControl.Set(CameraControlProperty.Pan, -100, CameraControlFlags.Manual);
+            //cameraControl.Set((CameraControlProperty)10, 100, CameraControlFlags.Manual);
+            cameraControl.Set(CameraControlProperty.Pan, -129, CameraControlFlags.Manual);
 
             //Console.WriteLine($"Property: {CameraControlProperty.Pan}, min: {min}, MAX: {max}, steppingDelta: {steppingDelta}");
         }
@@ -736,11 +738,8 @@ namespace TheOneCameraControl
             //cameraControl.GetRange(CameraControlProperty.Pan,
             //    out int min, out int max, out int steppingDelta,
             //    out int defaultValue, out var flags);
-            cameraControl.Set((CameraControlProperty)10, 160, CameraControlFlags.Manual);
-            cameraControl.Set(CameraControlProperty.Pan, 100, CameraControlFlags.Manual);
+            cameraControl.Set(CameraControlProperty.Pan, 129, CameraControlFlags.Manual);
             //Console.WriteLine($"Property: {CameraControlProperty.Pan}, MIN: {min}, max: {max}, steppingDelta: {steppingDelta}");
-
-
         }
 
         private void buttonZoomInFull_Click(object sender, EventArgs e)
@@ -853,19 +852,48 @@ namespace TheOneCameraControl
         private long startTiltTicks = 0;
         private long startZoomTicks = 0;
 
+        private long elapsedTimeMS = 0;
+
         private long stopPanTicks = 0;
         private long stopTiltTicks = 0;
         private long stopZoomTicks = 0;
 
-        private int panAmount = 0;
-        private int tiltAmount = 0;
-        private int zoomAmount = 0;
+        private int panAmount = 1;
+        private int tiltAmount = 1;
+        private int zoomAmount = 1;
 
         private int movementSpeed = 30;
+
+        private int panAdditionalSpeed = 0;
+        private int tiltAdditionalSpeed = 0;
+        private int zoomAdditionalSpeed = 0;
+        private int maxAdditionalSpeed = 30;
+
+        private int maxAdditionalPanSpeed = 30;
+        private int maxAdditionalTiltSpeed = 30;
+        private int maxAdditionalZoomSpeed = 30;
+
+        int estPanTime = 0;
+        int estTiltTime = 0;
+        int estZoomTime = 0;
+
 
         private int panSpeed = 15;
         private int tiltSpeed = 15;
         private int zoomSpeed = 15;
+
+        private int lastPanSpeed = 0;
+        private int lastTiltSpeed = 0;
+        private int lastZoomSpeed = 0;
+
+        private int calculatedPanSpeed = 15;
+        private int calculatedTiltSpeed = 15;
+        private int calculatedZoomSpeed = 15;
+
+        private int calculatedPanEndSpeed = 15;
+        private int calculatedTiltEndSpeed = 15;
+        private int calculatedZoomEndSpeed = 15;
+
 
         private bool stopPan = false;
         private bool stopTilt = false;
@@ -878,6 +906,12 @@ namespace TheOneCameraControl
         private Form1 _parent = null;
         private UDPListener _listener = null;
 
+        // For sending data out to Splunk in real-time.
+        private TcpClient _tcpoutClient = null;
+        private byte[] _tcpoutBytes = null;
+        private NetworkStream _tcpoutStream = null;
+        DateTimeOffset epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
         Boolean isSetup = false;
         public CameraControl(int port, Form1 parent)
         {
@@ -885,19 +919,22 @@ namespace TheOneCameraControl
 
             HandleOscPacket callback = delegate (OscPacket packet)
             {
-
+                
                 var messageReceived = (OscMessage)packet;
+                
                 receiveOSC(messageReceived);
             };
 
             _listener = new UDPListener(port, callback);
-
+            _tcpoutClient = new TcpClient("10.1.10.173", 30000);
+            _tcpoutStream = _tcpoutClient.GetStream();
         }
 
         public void stop()
         {
             Console.WriteLine("Cleanup on isle 7");
             _listener.Close();
+            _tcpoutClient.Close();
         }
         private void receiveOSC(OscMessage message)
         {
@@ -954,14 +991,17 @@ namespace TheOneCameraControl
                 {
                     int valueZ = (int)message.Arguments[0];
 
-                    if (lastZ != valueZ)
-                        cameraControl.Set((CameraControlProperty)13, valueZ, CameraControlFlags.Manual);
-
-                    lastZ = valueZ;
-                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    if (Math.Abs(lastZ - valueZ) > 5)
                     {
-                        _parent.textLastMessage.Text = $"{address} {lastZ}";
-                    });
+                        cameraControl.Set((CameraControlProperty)13, valueZ, CameraControlFlags.Manual);
+                        lastZ = valueZ;
+                    }
+
+
+                    //_parent.textLastMessage.Invoke((MethodInvoker)delegate
+                    //{
+                    //    _parent.textLastMessage.Text = $"{address} {lastZ}";
+                    //});
 
                 }
                 else if (address == "/PAN")
@@ -1013,113 +1053,7 @@ namespace TheOneCameraControl
                     destZoom = (int)message.Arguments[2];
                     movementSpeed = (int)message.Arguments[3];
 
-                    panSpeed = movementSpeed;
-                    tiltSpeed = movementSpeed;
-                    zoomSpeed = movementSpeed;
-
-                    //Thread ptzThread = new Thread(new ThreadStart(doPTZ));
-                    // Start secondary thread
-                    //ptzThread.Start();
-
-                    //if (lastZoom != valueZoom)
-                    //cameraControl.Set(CameraControlProperty.Pan, valuePan, CameraControlFlags.Manual);
-                    //cameraControl.Set(CameraControlProperty.Tilt, valueTilt, CameraControlFlags.Manual);
-                    //cameraControl.Set(CameraControlProperty.Zoom, valueZoom, CameraControlFlags.Manual);
-                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
-                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
-                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
-
-                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} \n");
-
-                    panAmount = Math.Abs(currentPan - destPan);
-                    tiltAmount = Math.Abs(currentTilt - destTilt);
-                    zoomAmount = Math.Abs(currentZoom - destZoom);
-
-                    Console.WriteLine($"PTZ Distance to move: {panAmount} {tiltAmount} {zoomAmount} \n");
-
-                    // Left      Right
-                    // -130 <--> 130
-
-                    // Up    Down
-                    // -90   90
-
-                    // At speed of 20
-
-                    //
-                    //float movementSpeedFloat = (float)movementSpeed;
-                    //float panAmountFloat = (float)panAmount;
-
-                    int estPanTime = (int)(panAmount / (movementSpeed / 1000.0f));
-                    int estTiltTime = (int)(tiltAmount / (movementSpeed / 1000.0f));
-                    int estZoomTime = (int)(zoomAmount / (movementSpeed / 1000.0f));
-
-                    Console.WriteLine($"Time estimates: {estPanTime} {estTiltTime} {estZoomTime} \n");
-
-                    if(estPanTime >= estTiltTime && estPanTime >= estZoomTime)
-                    {
-                        tiltSpeed = ((int)(((float)tiltAmount /(float)estPanTime) * 1000.0f));
-                        zoomSpeed = ((int)(((float)zoomAmount /(float)estPanTime) * 1000.0f));
-                        Console.WriteLine($"Pan Time Longest: tiltSpeed: {tiltSpeed} zoomSpeed {zoomSpeed} \n");
-                    }
-                    else if(estTiltTime >= estPanTime && estTiltTime >= estZoomTime)
-                    {
-                        panSpeed = ((int)(((float)panAmount / (float)estTiltTime) * 1000.0f));
-                        zoomSpeed = ((int)(((float)zoomAmount / (float)estTiltTime) * 1000.0f));
-                        Console.WriteLine($"Tilt Time Longest: panSpeed: {panSpeed} zoomSpeed {zoomSpeed} \n");
-                    }
-                    else if(estZoomTime >= estPanTime && estZoomTime >= estTiltTime)
-                    {
-                        panSpeed = ((int)(((float)panAmount / (float)estZoomTime) * 1000.0f));
-                        tiltSpeed = ((int)(((float)tiltAmount / (float)estZoomTime) * 1000.0f));
-                        Console.WriteLine($"Zoom Time Longest: panSpeed: {panSpeed} tiltSpeed {tiltSpeed} \n");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"This should never happen");
-                    }
-
-                    Console.WriteLine($"Pre calc Speeds: {panSpeed} {tiltSpeed} {zoomSpeed}");
-
-                    if (currentPan < destPan)
-                    {
-                        panSpeed *= -1;
-                    }
-
-                    if (currentTilt < destTilt)
-                    {
-                        tiltSpeed *= -1;
-                    }
-
-                    if (currentZoom > destZoom)
-                    {
-                        zoomSpeed *= -1;
-                    }
-
-                    Console.WriteLine($"Speeds: {panSpeed} {tiltSpeed} {zoomSpeed}");
-
-                    if (panAmount > 5)
-                    {
-                        gotoActive = true;
-                        startPanTicks = DateTime.UtcNow.Ticks;
-                        //Console.WriteLine($"Start pan time: {startPanTicks}");
-                        cameraControl.Set((CameraControlProperty)10, panSpeed, CameraControlFlags.Manual);
-                    }
-
-                    if (tiltAmount > 5)
-                    {
-                        gotoActive = true;
-                        startTiltTicks = DateTime.UtcNow.Ticks;
-                        //Console.WriteLine($"Start tilt time: {startTiltTicks}");
-                        cameraControl.Set((CameraControlProperty)11, tiltSpeed, CameraControlFlags.Manual);
-                    }
-
-                    if (zoomAmount > 5)
-                    {
-                        gotoActive = true;
-                        startZoomTicks = DateTime.UtcNow.Ticks;
-                        //Console.WriteLine($"Start zoom time: {startZoomTicks}");
-                        cameraControl.Set((CameraControlProperty)13, zoomSpeed, CameraControlFlags.Manual);
-                    }
+                    PTZS(0);
 
                     _parent.textLastMessage.Invoke((MethodInvoker)delegate
                     {
@@ -1168,16 +1102,214 @@ namespace TheOneCameraControl
                     });
 
                 }
-                else if (address == "/GetPosition")
+                else if (address == "/DumpValues")
                 {
                     cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
                     cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
                     cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+                    cameraControl.Get(CameraControlProperty.Focus, out int currentFocus, out var flags4);
 
-                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} \n");
+                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus} \n");
+                }
+                else if (address == "/GetValues")
+                {
+                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+                    cameraControl.Get(CameraControlProperty.Focus, out int currentFocus, out var flags4);
+
+                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus} \n");
+                }
+                else if (address == "/PanTest")
+                {
+                    int testSpeed = (int)message.Arguments[0];
+                    int testPan = (int)message.Arguments[1];
+
+                    panSpeedTest(testSpeed, testPan);
+
                 }
 
             }
+        }
+
+        public double easeInOutQuad(double x)
+        {
+            return x < 0.5 ? 2 * x * x : 1 - Math.Pow(-2 * x + 2, 2) / 2;
+        }
+
+        public double easeOutQuad(double x)
+        {
+            return 1.0 - (1.0 - x) * (1.0 - x);
+        }
+
+        public double easeInQuad(double x)
+        {
+            return x * x;
+        }
+
+        public double easeOutQuint(double x) {
+            return 1 - Math.Pow(1 - x, 5);
+        }
+
+        public double easeInQuint(double x)
+        {
+            return x * x * x * x;
+        }
+
+        public void PTZS(int speed)
+        {
+            cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+            cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+            cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+
+            if (speed == 0)
+            {
+                calculatedPanSpeed = movementSpeed;
+                calculatedTiltSpeed = movementSpeed;
+                calculatedZoomSpeed = movementSpeed;
+
+                calculatedPanEndSpeed = movementSpeed/2;
+                calculatedTiltEndSpeed = movementSpeed/2;
+                calculatedZoomEndSpeed = movementSpeed/2;
+
+                Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} \n");
+
+                panAmount = Math.Abs(currentPan - destPan);
+                tiltAmount = Math.Abs(currentTilt - destTilt);
+                zoomAmount = Math.Abs(currentZoom - destZoom);
+
+                Console.WriteLine($"PTZ Distance to move: {panAmount} {tiltAmount} {zoomAmount} \n");
+
+                estPanTime = (int)(panAmount / (movementSpeed / 1000.0f));
+                estTiltTime = (int)(tiltAmount / (movementSpeed / 1000.0f));
+                estZoomTime = (int)(zoomAmount / (movementSpeed / 1000.0f));
+
+                Console.WriteLine($"Time estimates: {estPanTime} {estTiltTime} {estZoomTime} \n");
+
+                if (estPanTime >= estTiltTime && estPanTime >= estZoomTime)
+                {
+                    calculatedTiltSpeed = ((int)(((float)tiltAmount / (float)estPanTime) * 1000.0f));
+                    calculatedZoomSpeed = ((int)(((float)zoomAmount / (float)estPanTime) * 1000.0f)) + 15;
+                    Console.WriteLine($"Pan Time Longest: tiltSpeed: {tiltSpeed} zoomSpeed {zoomSpeed} \n");
+                }
+                else if (estTiltTime >= estPanTime && estTiltTime >= estZoomTime)
+                {
+                    calculatedPanSpeed = ((int)(((float)panAmount / (float)estTiltTime) * 1000.0f));
+                    calculatedZoomSpeed = ((int)(((float)zoomAmount / (float)estTiltTime) * 1000.0f)) + 15;
+                    Console.WriteLine($"Tilt Time Longest: panSpeed: {panSpeed} zoomSpeed {zoomSpeed} \n");
+                }
+                else if (estZoomTime >= estPanTime && estZoomTime >= estTiltTime)
+                {
+                    calculatedPanSpeed = ((int)(((float)panAmount / (float)estZoomTime) * 1000.0f));
+                    calculatedTiltSpeed = ((int)(((float)tiltAmount / (float)estZoomTime) * 1000.0f));
+                    Console.WriteLine($"Zoom Time Longest: panSpeed: {panSpeed} tiltSpeed {tiltSpeed} \n");
+                }
+                else
+                {
+                    Console.WriteLine($"This should never happen");
+                }
+
+                panSpeed = calculatedPanSpeed;
+                tiltSpeed = calculatedTiltSpeed;
+                zoomSpeed = calculatedZoomSpeed;
+
+                calculatedPanEndSpeed = panSpeed / 2;
+                calculatedTiltEndSpeed = tiltSpeed / 2;
+                calculatedZoomEndSpeed = zoomSpeed / 2;
+
+                maxAdditionalPanSpeed = (int)((float)panSpeed * 1.5);
+                maxAdditionalTiltSpeed = (int)((float)tiltSpeed * 1.9);
+                maxAdditionalZoomSpeed = zoomSpeed * 5;
+            }
+            else
+            {
+                panSpeed = speed;
+                tiltSpeed = speed;
+                zoomSpeed = speed;
+            }
+
+            Console.WriteLine($"Pre calc Speeds: {panSpeed} {tiltSpeed} {zoomSpeed}");
+
+            if (currentPan < destPan)
+            {
+                panSpeed *= -1;
+            }
+
+            if (currentTilt < destTilt)
+            {
+                tiltSpeed *= -1;
+            }
+
+            if (currentZoom > destZoom)
+            {
+                zoomSpeed *= -1;
+            }
+
+            Console.WriteLine($"Calculated Speeds: {calculatedPanSpeed} {calculatedTiltSpeed} {calculatedZoomSpeed}");
+
+            if (panAmount > 1)
+            {
+                gotoActive = true;
+                startPanTicks = DateTime.UtcNow.Ticks;
+                Console.WriteLine($"Set Pan Speed: {panSpeed}");
+                cameraControl.Set((CameraControlProperty)10, panSpeed, CameraControlFlags.Manual);
+            }
+
+            if (tiltAmount > 1)
+            {
+                gotoActive = true;
+                startTiltTicks = DateTime.UtcNow.Ticks;
+                Console.WriteLine($"Set Tilt Speed: {tiltSpeed}");
+                cameraControl.Set((CameraControlProperty)11, tiltSpeed, CameraControlFlags.Manual);
+            }
+
+            if (zoomAmount > 1)
+            {
+                gotoActive = true;
+                startZoomTicks = DateTime.UtcNow.Ticks;
+                Console.WriteLine($"Set Zoom Speed: {zoomSpeed}");
+                cameraControl.Set((CameraControlProperty)14, zoomSpeed, CameraControlFlags.Manual);
+            }
+        }
+
+        public void panSpeedTest(int speed, int dPan)
+        {
+            //cameraControl.Set(CameraControlProperty.Pan, -130, CameraControlFlags.Manual);
+
+            destPan = dPan;
+
+            movementSpeed = speed;
+
+            panSpeed = speed;
+
+            cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+
+            Console.WriteLine($"Current PTZ: {currentPan} \n");
+
+            panAmount = Math.Abs(currentPan - destPan);
+
+            Console.WriteLine($"PTZ Distance to move: {panAmount}\n");
+
+            estPanTime = (int)(panAmount / (movementSpeed / 1000.0f));
+
+            Console.WriteLine($"Time estimates: {estPanTime}\n");
+
+
+            if (currentPan < destPan)
+            {
+                panSpeed *= -1;
+            }
+
+            Console.WriteLine($"Speeds: {panSpeed}");
+
+            gotoActive = true;
+            stopTilt = true;
+            stopZoom = true;
+
+            startPanTicks = DateTime.UtcNow.Ticks;
+            //Console.WriteLine($"Start pan time: {startPanTicks}");
+            cameraControl.Set((CameraControlProperty)10, panSpeed, CameraControlFlags.Manual);
+
         }
 
         public void cameraControlLoop()
@@ -1194,9 +1326,148 @@ namespace TheOneCameraControl
                         cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
                         cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
 
+                        elapsedTimeMS = (DateTime.UtcNow.Ticks - startPanTicks) / 10000;
+
+                        float panAmountRemaining = Math.Abs(currentPan - destPan);
+                        float tiltAmountRemaining = Math.Abs(currentTilt - destTilt);
+                        float zoomAmountRemaining = Math.Abs(currentZoom - destZoom);
+
+                        double pctPanComplete = 0;
+                        double pctTiltComplete = 0;
+                        double pctZoomComplete = 0;
+
+                        if (panAmount > 0)
+                        {
+                            pctPanComplete = (panAmount - panAmountRemaining) / (float)panAmount * 2;
+                        }
+                        else
+                        {
+                            pctPanComplete = 1.0;
+                        }
+
+                        if (tiltAmount > 0)
+                        {
+                            pctTiltComplete = (tiltAmount - tiltAmountRemaining) / (float)tiltAmount * 2;
+                        }
+                        else
+                        {
+                            pctTiltComplete = 1.0;
+                        }
+
+                        if (zoomAmount > 0)
+                        {
+                            pctZoomComplete = (zoomAmount - zoomAmountRemaining) / (float)zoomAmount * 2;
+                        }
+                        else
+                        {
+                            pctZoomComplete = 1.0;
+                        }
+
+
+
+
+                        if (pctPanComplete < 1.0)
+                        {
+                            panAdditionalSpeed = (int)((double)maxAdditionalPanSpeed * easeInQuad(pctPanComplete));
+                            panSpeed = calculatedPanSpeed + panAdditionalSpeed;
+                        }
+                        else if (pctPanComplete >= 1.0)
+                        {
+                            pctPanComplete -= 1.0;
+
+                            panAdditionalSpeed = (int)((double)maxAdditionalPanSpeed * easeOutQuad(1.0 - pctPanComplete));
+                            panSpeed = calculatedPanEndSpeed + panAdditionalSpeed;
+                        }
+
+                        if (pctTiltComplete < 1.0)
+                        {
+                            tiltAdditionalSpeed = (int)((double)maxAdditionalTiltSpeed * easeInQuad(pctTiltComplete));
+                            tiltSpeed = calculatedTiltSpeed + tiltAdditionalSpeed;
+                        }
+                        else if (pctTiltComplete >= 1.0)
+                        {
+                            pctTiltComplete -= 1.0;
+
+                            tiltAdditionalSpeed = (int)((double)maxAdditionalTiltSpeed * easeOutQuad(1.0 - pctTiltComplete));
+                            tiltSpeed = calculatedTiltEndSpeed + tiltAdditionalSpeed;
+                        }
+
+                        if (pctZoomComplete < 1.0)
+                        {
+                            zoomAdditionalSpeed = (int)((double)maxAdditionalZoomSpeed * easeInQuad(pctZoomComplete));
+                            zoomSpeed = calculatedZoomSpeed + zoomAdditionalSpeed;
+                        }
+                        else if (pctZoomComplete >= 1.0)
+                        {
+                            pctZoomComplete -= 1.0;
+                            zoomAdditionalSpeed = (int)((double)maxAdditionalZoomSpeed * easeOutQuad(1.0 - pctZoomComplete));
+                            zoomSpeed = calculatedZoomEndSpeed + zoomAdditionalSpeed;
+                        }
+
+                        Console.WriteLine($"Additional Speeds: {panAdditionalSpeed} {tiltAdditionalSpeed} {zoomAdditionalSpeed}");
+
+                        //panSpeed = calculatedPanSpeed + panAdditionalSpeed;
+                        //tiltSpeed = calculatedTiltSpeed + tiltAdditionalSpeed;
+                        //zoomSpeed = calculatedZoomSpeed + zoomAdditionalSpeed;
+
+                        if (currentPan < destPan)
+                        {
+                            panSpeed *= -1;
+                        }
+
+                        if (currentTilt < destTilt)
+                        {
+                            tiltSpeed *= -1;
+                        }
+
+                        if (currentZoom > destZoom)
+                        {
+                            zoomSpeed *= -1;
+                        }
+
+                        Console.WriteLine($"Remaining amounts: {pctPanComplete:0.000} {pctTiltComplete:0.000} {pctZoomComplete:0.000}");
+                        Console.WriteLine($"Tweened speeds: {panSpeed} {tiltSpeed} {zoomSpeed}");
+
+                        //double nowEpochMS = ((double)(DateTime.UtcNow.Ticks) / 10000.0)/1000.0;
+
+                        double nowEpochMS = ((double)(DateTimeOffset.UtcNow - epoch).TotalMilliseconds)/1000.0;
+
+                        Console.WriteLine($"{nowEpochMS:0000000000.000} panSpeed={panSpeed} tiltSpeed={tiltSpeed} zoomSpeed={zoomSpeed}");
+
+                        _tcpoutBytes = Encoding.ASCII.GetBytes($"{nowEpochMS:0000000000.000} panSpeed={panSpeed} tiltSpeed={tiltSpeed} zoomSpeed={zoomSpeed}\n");
+                        _tcpoutStream.Write(_tcpoutBytes, 0, _tcpoutBytes.Length);
+
+
+                        if (panSpeed != lastPanSpeed)
+                        {
+                            lastPanSpeed = panSpeed;
+                            cameraControl.Set((CameraControlProperty)10, panSpeed, CameraControlFlags.Manual);
+                        }
+
+                        if (tiltSpeed != lastTiltSpeed)
+                        {
+                            lastTiltSpeed = tiltSpeed;
+                            cameraControl.Set((CameraControlProperty)11, tiltSpeed, CameraControlFlags.Manual);
+                        }
+
+                        if (zoomSpeed != lastZoomSpeed)
+                        {
+                            lastZoomSpeed = zoomSpeed;
+                            cameraControl.Set((CameraControlProperty)13, zoomSpeed, CameraControlFlags.Manual);
+                        }
+
+                        double panSpeedFactor = (double)(1.0f - Math.Cos((double)((double)pctPanComplete * (double)Math.PI)));
+                        double tiltSpeedFactor = (double)(1.0f - Math.Cos((double)((double)pctTiltComplete * (double)Math.PI)));
+                        double zoomSpeedFactor = (double)(1.0f - Math.Cos((double)((double)pctZoomComplete * (double)Math.PI)));
+
+                        //Console.WriteLine($"Speed factors: {panSpeedFactor:0.000} {tiltSpeedFactor:0.000} {zoomSpeedFactor:0.000}");
+
+                        //Console.WriteLine($"Sin of elapsedTimeMS: {Math.Sin(elapsedTimeMS)}");
+
                         if (!stopPan && panSpeed < 0 && currentPan >= destPan)
                         {
                             Console.WriteLine($"Stop Pan currentPan >= destPan: {currentPan} {currentTilt} {currentZoom} \n");
+
                             stopPanTicks = DateTime.UtcNow.Ticks;
                             stopPan = true;
                         }
@@ -1206,6 +1477,7 @@ namespace TheOneCameraControl
                             stopPanTicks = DateTime.UtcNow.Ticks;
                             stopPan = true;
                         }
+
 
                         if (!stopTilt && tiltSpeed < 0 && currentTilt >= destTilt)
                         {
@@ -1219,6 +1491,7 @@ namespace TheOneCameraControl
                             stopTiltTicks = DateTime.UtcNow.Ticks;
                             stopTilt = true;
                         }
+
 
                         if (!stopZoom && zoomSpeed < 0 && (currentZoom <= destZoom || currentZoom <= 0))
                         {
@@ -1239,13 +1512,30 @@ namespace TheOneCameraControl
                             cameraControl.Set((CameraControlProperty)11, 0, CameraControlFlags.Manual);
                         if (stopZoom)
                             cameraControl.Set((CameraControlProperty)13, 0, CameraControlFlags.Manual);
-                        
+
 
                         /*if (stopPan || stopTilt || stopZoom)
                         {
                             cameraControl.Set((CameraControlProperty)10, 0, CameraControlFlags.Manual);
                             cameraControl.Set((CameraControlProperty)11, 0, CameraControlFlags.Manual);
                             cameraControl.Set((CameraControlProperty)13, 0, CameraControlFlags.Manual);
+                        }
+                        */
+                        /*
+                        if (stopPan && Math.Abs(currentPan - destPan) > 2)
+                        {
+                            stopPan = false;
+                            PTZS(10);
+                        }
+                        if (stopTilt && Math.Abs(currentTilt - destTilt) > 2)
+                        {
+                            stopTilt = false;
+                            PTZS(10);
+                        }
+                        if (stopZoom && Math.Abs(currentZoom - destZoom) > 2)
+                        {
+                            stopZoom = false;
+                            PTZS(10);
                         }
                         */
 
@@ -1265,15 +1555,24 @@ namespace TheOneCameraControl
                             float tiltPerMS = (float)tiltAmount / tiltTimeMS;
                             float zoomPerMS = (float)zoomAmount / zoomTimeMS;
 
-                            Console.WriteLine($"Done Moving Speeds: panTime: {panTimeMS} tiltTime: {tiltTimeMS} zoomTime: {zoomTimeMS}");
-                            Console.WriteLine($"Speed per unit: pan: {panPerMS:0.0000} tilt: {tiltPerMS:0.0000} zoom: {zoomPerMS:0.0000}");
+                            //Console.WriteLine($"Done Moving Speeds: panTime: {panTimeMS} tiltTime: {tiltTimeMS} zoomTime: {zoomTimeMS}");
+                            //Console.WriteLine($"Speed per unit: pan: {panPerMS:0.0000} tilt: {tiltPerMS:0.0000} zoom: {zoomPerMS:0.0000}");
+                            //Console.WriteLine($"pan, {panSpeed}, {estPanTime}, {panTimeMS}, {panPerMS} ");
+                            //Console.WriteLine($"tilt, {tiltSpeed}, {estTiltTime}, {tiltTimeMS}, {tiltPerMS} ");
+                            //Console.WriteLine($"zoom, {zoomSpeed}, {estZoomTime}, {zoomTimeMS}, {zoomPerMS} ");
+
+
                         }
 
                         //Console.WriteLine($"PTZ: {currentPan} {currentTilt} {currentZoom} \n");
                     }
 
+                    //gotoActive = true;
+                    //stopPan = false;
+                    //stopTilt = false;
+                    //stopZoom = false;
 
-                    Thread.Sleep(1);
+                    Thread.Sleep(50);
                     //Console.WriteLine($"Ticks per loop: {DateTime.UtcNow.Ticks - lastTimeStamp}");
                 }
 
