@@ -15,10 +15,10 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Net.Sockets;
 using System.Text;
+using System.Collections.Generic;
 
 namespace TheOneCameraControl
 {
-
     public class Form1 : System.Windows.Forms.Form
     {
         private ComboBox comboDevice;
@@ -75,14 +75,11 @@ namespace TheOneCameraControl
 
         public Form1()
         {
-            //
-            // Required for Windows Form Designer support
-            //
             InitializeComponent();
 
-            //
-            // TODO: Add any constructor code after InitializeComponent call
-            //
+            List<CameraDevice> cameraList = new List<CameraDevice>();
+
+
 
             //enumerate Video Input filters and add them to comboDevice
             foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
@@ -99,17 +96,23 @@ namespace TheOneCameraControl
                 {
                     continue;
                 }
-                comboDevice.Items.Add(device.Name);
+
+                cameraList.Add(new CameraDevice { Name = (string)device.Name, DevicePath = (string)device.DevicePath });
+                //comboDevice.Items.Add(device.Name);
                 theDevice = (IBaseFilter)source;
                 theDevicePath = device.DevicePath;
                 //break;
             }
 
+            comboDevice.DataSource = cameraList;
+            comboDevice.DisplayMember = "Name";
+            comboDevice.ValueMember = "DevicePath";
+
             //Select first combobox item
-            if (comboDevice.Items.Count > 0)
-            {
-                comboDevice.SelectedIndex = 0;
-            }
+            //if (comboDevice.Items.Count > 0)
+            //{
+            //    comboDevice.SelectedIndex = 0;
+            //}
 
             //StartServer();
 
@@ -582,6 +585,8 @@ namespace TheOneCameraControl
 
         private void comboDevice_SelectedIndexChanged(object sender, System.EventArgs e)
         {
+            string devicepath = "none";
+
             //Release COM objects
             if (theDevice != null)
             {
@@ -589,7 +594,18 @@ namespace TheOneCameraControl
                 theDevice = null;
             }
             //Create the filter for the selected video input device
-            string devicepath = comboDevice.SelectedItem.ToString();
+            try
+            {
+                if (comboDevice.Items.Count > 0)
+                {
+                    devicepath = (string)comboDevice.SelectedValue;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
             theDevice = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
             theDevicePath = devicepath;
         }
@@ -1603,5 +1619,9 @@ namespace TheOneCameraControl
         }
     }
 
-
+    public class CameraDevice
+    {
+        public string Name { get; set; }
+        public string DevicePath { get; set; }
+    }
 }
