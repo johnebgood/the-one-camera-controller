@@ -1130,16 +1130,10 @@ namespace TheOneCameraControl
                 }
                 else if (address == "/TRACKING")
                 {
-                    int valueExposure = (int)message.Arguments[0];
+                    int valueTracking = (int)message.Arguments[0];
 
-                    if (lastExposure != valueExposure)
-                        cameraControl.Set(CameraControlProperty.Exposure, valueExposure, CameraControlFlags.Manual);
+                    // Needs to send OSC to OBSBOT_WebCam software to enable or disable tracking.
 
-                    lastExposure = valueExposure;
-                    _parent.textLastMessage.Invoke((MethodInvoker)delegate
-                    {
-                        _parent.textLastMessage.Text = $"{address} {lastExposure}";
-                    });
 
                 }
                 else if (address == "/DumpValues")
