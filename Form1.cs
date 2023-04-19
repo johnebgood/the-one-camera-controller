@@ -99,7 +99,7 @@ namespace TheOneCameraControl
                 {
                     continue;
                 }
-                comboDevice.Items.Add(device.DevicePath);
+                comboDevice.Items.Add(device.Name);
                 theDevice = (IBaseFilter)source;
                 theDevicePath = device.DevicePath;
                 //break;
@@ -834,6 +834,7 @@ namespace TheOneCameraControl
     public class CameraControl
     {
         private IBaseFilter theDevice = null;
+        string theDevicePath = "unbound";
         private IAMCameraControl cameraControl = null;
         private int lastX = 0;
         private int lastY = 0;
@@ -919,9 +920,8 @@ namespace TheOneCameraControl
 
             HandleOscPacket callback = delegate (OscPacket packet)
             {
-                
                 var messageReceived = (OscMessage)packet;
-                
+
                 receiveOSC(messageReceived);
             };
 
@@ -938,6 +938,12 @@ namespace TheOneCameraControl
         }
         private void receiveOSC(OscMessage message)
         {
+            string address = message.Address;
+            string remoteIPAddress = message.remoteIPAddress;
+            int remotePort = message.remotePort;
+
+            Console.WriteLine($"Remote: {remoteIPAddress}:{remotePort}");
+
             if (!isSetup)
             {
                 object source = null;
@@ -949,6 +955,7 @@ namespace TheOneCameraControl
                         try
                         {
                             device.Mon.BindToObject(null, null, ref iid, out source);
+                            theDevicePath = device.DevicePath;
                         }
                         catch (Exception ex)
                         {
@@ -969,8 +976,25 @@ namespace TheOneCameraControl
             }
             else if (cameraControl != null)
             {
-                string address = message.Address;
-                if (address == "/FLYXY")
+                if (address == "/GetCurrentValues")
+                {
+                    // Must have at least one value passed.
+                    int dummy = (int)message.Arguments[0];
+
+                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+                    cameraControl.Get(CameraControlProperty.Focus, out int currentFocus, out var flags4);
+
+                    Console.WriteLine($"Sending Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus} \n");
+                    Console.WriteLine($"To: {remoteIPAddress}:{remotePort}\n");
+
+                    var responseMessage = new SharpOSC.OscMessage("/CurrentValues", currentPan, currentTilt, currentZoom, currentFocus, theDevicePath);
+                    var sender = new SharpOSC.UDPSender(remoteIPAddress, remotePort);
+
+                    sender.Send(responseMessage);
+                }
+                else if (address == "/FLYXY")
                 {
                     int valueX = (int)message.Arguments[0];
                     int valueY = ((int)message.Arguments[1]) * -1;
@@ -1109,16 +1133,10 @@ namespace TheOneCameraControl
                     cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
                     cameraControl.Get(CameraControlProperty.Focus, out int currentFocus, out var flags4);
 
-                    Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus} \n");
-                }
-                else if (address == "/GetValues")
-                {
-                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
-                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
-                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
-                    cameraControl.Get(CameraControlProperty.Focus, out int currentFocus, out var flags4);
+                    //_listener.RemoteIpEndPoint.
 
                     Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus} \n");
+                    //Console.WriteLine($"PORT: {_listener.RemoteIpEndPoint}");
                 }
                 else if (address == "/PanTest")
                 {
