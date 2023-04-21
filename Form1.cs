@@ -16,6 +16,9 @@ using System.Windows.Forms;
 using System.Net.Sockets;
 using System.Text;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace TheOneCameraControl
 {
@@ -479,8 +482,34 @@ namespace TheOneCameraControl
             return (IBaseFilter)source;
         }
 
-        private void dumpAll()
+        public static async Task PostDataAsync(string url, object data)
         {
+            HttpClient client = new HttpClient();
+
+            // Convert the data object to a JSON string
+            string jsonData = JsonConvert.SerializeObject(data);
+
+            StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await client.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Data successfully posted to the server.");
+                string responseBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Server response: {responseBody}");
+            }
+            else
+            {
+                Console.WriteLine($"Error posting data: {response.StatusCode}");
+            }
+        }
+
+        private async void dumpAll()
+        {
+
+            var cameraList = new List<object>();
+
             object source = null;
             IBaseFilter idevice = null;
             //var cameraControl = null;
@@ -504,8 +533,13 @@ namespace TheOneCameraControl
 
                 Console.WriteLine($"device: {device.Name}:");
                 Console.WriteLine($"device path: {device.DevicePath}:");
+
+                var settingsList = new List<object>();
+
                 for (int i = 0; i <= 100; i++)
                 {
+                    
+
                     int result = cameraControl.GetRange((CameraControlProperty)i,
                         out int min, out int max, out int steppingDelta,
                         out int defaultValue, out var flags);
@@ -517,12 +551,30 @@ namespace TheOneCameraControl
 
                         cameraControl.Get((CameraControlProperty)i, out int value, out var flags2);
                         Console.WriteLine($"currentValue: {value}, flags: {flags2}\n");
+
+                        var props = new
+                        {
+                            property = i,
+                            min = min,
+                            max = max,
+                            steppingDelta = steppingDelta,
+                            defaultValue = defaultValue,
+                            rangeFlags = flags,
+                            currentValue = value,
+                            currentFlags = flags2
+                        };
+                        settingsList.Add(props);
                     }
                 }
+
                 Console.WriteLine("-----------------------");
 
 
+                cameraList.Add(new { device = device, settings = settingsList });
+
+
             }
+            await PostDataAsync("http://127.0.0.1:1880/TOCCSetCameraConfig", cameraList);
         }
 
         private void dumpSettings()
@@ -641,7 +693,7 @@ namespace TheOneCameraControl
             var cameraControl = theDevice as IAMCameraControl;
             if (cameraControl == null) return;
 
-            cameraControl.Set((CameraControlProperty)10, 160, CameraControlFlags.Manual);
+            cameraControl.Set((CameraControlProperty)10, 100, CameraControlFlags.Manual);
             //Console.WriteLine($"Property: {CameraControlProperty.Tilt}, value: {value}");
         }
 
@@ -946,6 +998,34 @@ namespace TheOneCameraControl
             _tcpoutStream = _tcpoutClient.GetStream();
         }
 
+        public void setDevice(string devicePath)
+        {
+            double startTimeTicks = DateTime.UtcNow.Ticks;
+            object source = null;
+            Guid iid = typeof(IBaseFilter).GUID;
+            foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
+            {
+                if (device.DevicePath.CompareTo(devicePath) == 0)
+                {
+                    try
+                    {
+                        device.Mon.BindToObject(null, null, ref iid, out source);
+                        theDevicePath = device.DevicePath;
+                        theDevice = (IBaseFilter)source;
+                        cameraControl = theDevice as IAMCameraControl;
+                        Console.WriteLine($"MS to find and set device: {(int)((DateTime.UtcNow.Ticks - startTimeTicks) / 10000)}ms");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"device failed: {ex}:");
+                        //Console.WriteLine(ex.ToString());
+                        continue;
+                    }
+                    break;
+                }
+            }
+        }
+
         public void stop()
         {
             Console.WriteLine("Cleanup on isle 7");
@@ -1006,9 +1086,35 @@ namespace TheOneCameraControl
                     Console.WriteLine($"To: {remoteIPAddress}:{remotePort}\n");
 
                     var responseMessage = new SharpOSC.OscMessage("/CurrentValues", currentPan, currentTilt, currentZoom, currentFocus, theDevicePath);
+                    var sender = new SharpOSC.UDPSender(message.remoteIPAddress, message.remotePort);
+
+                    sender.Send(responseMessage);
+                }
+                else if (address == "/SendCurrentValuesToEndpoint")
+                {
+                    // Must have at least one value passed.
+                    remoteIPAddress = (string)message.Arguments[0]; 
+                    remotePort = (int)message.Arguments[1];
+
+                    cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
+                    cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
+                    cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+                    cameraControl.Get(CameraControlProperty.Focus, out int currentFocus, out var flags4);
+
+                    Console.WriteLine($"Sending Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus}");
+                    Console.WriteLine($"To: {remoteIPAddress}:{remotePort}\n");
+
+                    var responseMessage = new SharpOSC.OscMessage("/CurrentValues", currentPan, currentTilt, currentZoom, currentFocus, theDevicePath);
                     var sender = new SharpOSC.UDPSender(remoteIPAddress, remotePort);
 
                     sender.Send(responseMessage);
+                }
+                else if (address == "/SetCurrentDevice")
+                {
+                    // Must have at least one value passed.
+                    string devicePath = (string)message.Arguments[0];
+                    setDevice(devicePath);
+                    Console.WriteLine($"Set Device: {devicePath}");
                 }
                 else if (address == "/FLYXY")
                 {
@@ -1088,10 +1194,18 @@ namespace TheOneCameraControl
                 }
                 else if (address == "/PTZS")
                 {
+                    Console.Write($"Arguments: {message.Arguments.Count}");
+
                     destPan = (int)message.Arguments[0];
                     destTilt = (int)message.Arguments[1];
                     destZoom = (int)message.Arguments[2];
                     movementSpeed = (int)message.Arguments[3];
+                    if(message.Arguments.Count > 4)
+                    {
+                        theDevicePath = (string)message.Arguments[4];
+                        setDevice(theDevicePath);
+                        
+                    }
 
                     PTZS(0);
 

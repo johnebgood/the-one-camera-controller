@@ -24,7 +24,7 @@ OSC Addresses that should work on all cameras that support these functions. Be s
 # Pan, Tilt, Zoom, Speed. Can be used for presets! Tweening is a work in progress but mostly working.
 /PTZS int int int int 
 
-# Start moving in the specified direction by speed. +-178 for pan or tilt.
+# Start moving in the specified direction by speed. +-178 for pan and tilt.
 /FLYXY int int
 
 # Zoom in or out by speed, +-100
