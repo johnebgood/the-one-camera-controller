@@ -8,23 +8,25 @@ Written by oohansen@gmail.com
 *****************************************************************************/
 
 using DirectShowLib;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using SharpOSC;
 using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Windows.Forms;
-using System.Net.Sockets;
-using System.Text;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Net.Http;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using System.Windows.Forms;
 
-namespace TheOneCameraControl
+namespace TheOneCameraControler
 {
     public class Form1 : System.Windows.Forms.Form
     {
-        private ComboBox comboDevice;
         private Button buttonDump;
         private Button buttonStopServer;
         private Button buttonStartServer;
@@ -49,6 +51,12 @@ namespace TheOneCameraControl
         private Label label1;
         private Label label2;
         public TextBox textLastMessage;
+        private DataGridView cameraGridView;
+        private DataGridViewTextBoxColumn CameraNumber;
+        private DataGridViewTextBoxColumn SystemCameraNumber;
+        private DataGridViewTextBoxColumn Camera;
+        private DataGridViewTextBoxColumn DevicePath;
+        private Button PurgeRedItemsButton;
 
         /// <summary>
         /// Required designer variable.
@@ -73,18 +81,25 @@ namespace TheOneCameraControl
 
         public IBaseFilter theDevice = null;
         public string theDevicePath = "";
-        CameraControl camControl = null;
-
+        OSCReceiver oscReceiver = null;
 
         public Form1()
         {
             InitializeComponent();
 
-            List<CameraDevice> cameraList = new List<CameraDevice>();
+            if (IsDarkModeEnabled())
+            {
+                ApplyDarkTheme(this);
+            }
 
+            cameraGridView.CellMouseDown += CameraGridView_CellMouseDown;
+            cameraGridView.MouseDown += CameraGridView_MouseDown;
+            cameraGridView.MouseMove += CameraGridView_MouseMove;
+            cameraGridView.DragOver += CameraGridView_DragOver;
+            cameraGridView.DragDrop += CameraGridView_DragDrop;
 
-
-            //enumerate Video Input filters and add them to comboDevice
+            int i = 1;
+            //enumerate Video Input filters and add them to cameraGridView
             foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
 
             {
@@ -100,26 +115,106 @@ namespace TheOneCameraControl
                     continue;
                 }
 
-                cameraList.Add(new CameraDevice { Name = (string)device.Name, DevicePath = (string)device.DevicePath });
-                //comboDevice.Items.Add(device.Name);
+                cameraGridView.Rows.Add(new string[] { i.ToString(), i.ToString(), device.Name, device.DevicePath });
+
                 theDevice = (IBaseFilter)source;
                 theDevicePath = device.DevicePath;
+                i++;
                 //break;
             }
 
-            comboDevice.DataSource = cameraList;
-            comboDevice.DisplayMember = "Name";
-            comboDevice.ValueMember = "DevicePath";
-
-            //Select first combobox item
-            //if (comboDevice.Items.Count > 0)
-            //{
-            //    comboDevice.SelectedIndex = 0;
-            //}
-
-            //StartServer();
-
+            //LoadDataGridViewFromJson(cameraGridView, "config.json");
+            LoadAndCompareData(cameraGridView, "config.json");
+            UpdateSystemCameraNumber(cameraGridView);
+            SelectDeviceByCameraNumber(1);
+            StartServer();
         }
+        private void ApplyDarkTheme(Control parentControl)
+        {
+            // Set the dark theme colors for the parent control
+            parentControl.BackColor = Color.FromArgb(30, 30, 30);
+            parentControl.ForeColor = Color.White;
+
+            // Apply the dark theme to all child controls
+            foreach (Control childControl in parentControl.Controls)
+            {
+                if (childControl is DataGridView dataGridView)
+                {
+                    ApplyDarkThemeToDataGridView(dataGridView);
+                }
+                else
+                {
+                    ApplyDarkTheme(childControl);
+                }
+            }
+        }
+
+        private void ApplyDarkThemeToDataGridView(DataGridView dataGridView)
+        {
+            dataGridView.EnableHeadersVisualStyles = false;
+
+            // Set DataGridView general colors
+            dataGridView.BackgroundColor = Color.FromArgb(30, 30, 30);
+            dataGridView.ForeColor = Color.White;
+            dataGridView.BorderStyle = BorderStyle.None;
+
+            // Set DataGridView header colors
+            DataGridViewCellStyle headerStyle = new DataGridViewCellStyle();
+            headerStyle.BackColor = Color.FromArgb(50, 50, 50);
+            headerStyle.ForeColor = Color.White;
+            headerStyle.Font = dataGridView.Font;
+            dataGridView.ColumnHeadersDefaultCellStyle = headerStyle;
+            dataGridView.RowHeadersDefaultCellStyle = headerStyle;
+
+            // Set DataGridView row and cell colors
+            DataGridViewCellStyle cellStyle = new DataGridViewCellStyle();
+            cellStyle.BackColor = Color.FromArgb(60, 60, 60);
+            cellStyle.ForeColor = Color.White;
+            cellStyle.SelectionBackColor = Color.FromArgb(80, 80, 80);
+            cellStyle.SelectionForeColor = Color.White;
+            dataGridView.DefaultCellStyle = cellStyle;
+
+            // Set DataGridView grid and row separator colors
+            dataGridView.GridColor = Color.FromArgb(80, 80, 80);
+            dataGridView.RowHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 80, 80);
+            dataGridView.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 80, 80);
+
+            // Set DataGridView alternating row colors
+            DataGridViewCellStyle alternatingCellStyle = new DataGridViewCellStyle();
+            alternatingCellStyle.BackColor = Color.FromArgb(50, 50, 50);
+            alternatingCellStyle.ForeColor = Color.White;
+            alternatingCellStyle.SelectionBackColor = Color.FromArgb(80, 80, 80);
+            alternatingCellStyle.SelectionForeColor = Color.White;
+            dataGridView.AlternatingRowsDefaultCellStyle = alternatingCellStyle;
+        }
+
+
+
+        private bool IsDarkModeEnabled()
+        {
+            try
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+                {
+                    if (key != null)
+                    {
+                        object registryValueObject = key.GetValue("AppsUseLightTheme");
+                        if (registryValueObject != null)
+                        {
+                            int registryValue = (int)registryValueObject;
+                            return registryValue == 0; // Dark mode is enabled if the value is 0
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // In case of any error, fall back to the default light theme
+            }
+
+            return false;
+        }
+
 
         /// <summary>
         /// Clean up any resources being used.
@@ -144,7 +239,6 @@ namespace TheOneCameraControl
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            this.comboDevice = new System.Windows.Forms.ComboBox();
             this.buttonDump = new System.Windows.Forms.Button();
             this.buttonStopServer = new System.Windows.Forms.Button();
             this.buttonStartServer = new System.Windows.Forms.Button();
@@ -169,20 +263,18 @@ namespace TheOneCameraControl
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.textLastMessage = new System.Windows.Forms.TextBox();
+            this.cameraGridView = new System.Windows.Forms.DataGridView();
+            this.CameraNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SystemCameraNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Camera = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.DevicePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.PurgeRedItemsButton = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.cameraGridView)).BeginInit();
             this.SuspendLayout();
-            // 
-            // comboDevice
-            // 
-            this.comboDevice.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboDevice.Location = new System.Drawing.Point(8, 8);
-            this.comboDevice.Name = "comboDevice";
-            this.comboDevice.Size = new System.Drawing.Size(256, 21);
-            this.comboDevice.TabIndex = 0;
-            this.comboDevice.SelectedIndexChanged += new System.EventHandler(this.comboDevice_SelectedIndexChanged);
             // 
             // buttonDump
             // 
-            this.buttonDump.Location = new System.Drawing.Point(272, 8);
+            this.buttonDump.Location = new System.Drawing.Point(579, 12);
             this.buttonDump.Name = "buttonDump";
             this.buttonDump.Size = new System.Drawing.Size(120, 24);
             this.buttonDump.TabIndex = 2;
@@ -191,7 +283,7 @@ namespace TheOneCameraControl
             // 
             // buttonStopServer
             // 
-            this.buttonStopServer.Location = new System.Drawing.Point(8, 415);
+            this.buttonStopServer.Location = new System.Drawing.Point(138, 760);
             this.buttonStopServer.Name = "buttonStopServer";
             this.buttonStopServer.Size = new System.Drawing.Size(110, 23);
             this.buttonStopServer.TabIndex = 4;
@@ -200,7 +292,7 @@ namespace TheOneCameraControl
             // 
             // buttonStartServer
             // 
-            this.buttonStartServer.Location = new System.Drawing.Point(8, 382);
+            this.buttonStartServer.Location = new System.Drawing.Point(138, 727);
             this.buttonStartServer.Name = "buttonStartServer";
             this.buttonStartServer.Size = new System.Drawing.Size(111, 23);
             this.buttonStartServer.TabIndex = 5;
@@ -209,7 +301,7 @@ namespace TheOneCameraControl
             // 
             // buttonUp
             // 
-            this.buttonUp.Location = new System.Drawing.Point(155, 75);
+            this.buttonUp.Location = new System.Drawing.Point(284, 532);
             this.buttonUp.Name = "buttonUp";
             this.buttonUp.Size = new System.Drawing.Size(120, 24);
             this.buttonUp.TabIndex = 7;
@@ -218,7 +310,7 @@ namespace TheOneCameraControl
             // 
             // buttonDown
             // 
-            this.buttonDown.Location = new System.Drawing.Point(155, 190);
+            this.buttonDown.Location = new System.Drawing.Point(284, 592);
             this.buttonDown.Name = "buttonDown";
             this.buttonDown.Size = new System.Drawing.Size(120, 24);
             this.buttonDown.TabIndex = 8;
@@ -227,7 +319,7 @@ namespace TheOneCameraControl
             // 
             // buttonLeft
             // 
-            this.buttonLeft.Location = new System.Drawing.Point(108, 134);
+            this.buttonLeft.Location = new System.Drawing.Point(237, 562);
             this.buttonLeft.Name = "buttonLeft";
             this.buttonLeft.Size = new System.Drawing.Size(44, 24);
             this.buttonLeft.TabIndex = 9;
@@ -236,7 +328,7 @@ namespace TheOneCameraControl
             // 
             // buttonRight
             // 
-            this.buttonRight.Location = new System.Drawing.Point(272, 134);
+            this.buttonRight.Location = new System.Drawing.Point(401, 562);
             this.buttonRight.Name = "buttonRight";
             this.buttonRight.Size = new System.Drawing.Size(40, 24);
             this.buttonRight.TabIndex = 10;
@@ -245,7 +337,7 @@ namespace TheOneCameraControl
             // 
             // buttonCenter
             // 
-            this.buttonCenter.Location = new System.Drawing.Point(186, 134);
+            this.buttonCenter.Location = new System.Drawing.Point(315, 562);
             this.buttonCenter.Name = "buttonCenter";
             this.buttonCenter.Size = new System.Drawing.Size(60, 24);
             this.buttonCenter.TabIndex = 13;
@@ -254,7 +346,7 @@ namespace TheOneCameraControl
             // 
             // buttonRightLimit
             // 
-            this.buttonRightLimit.Location = new System.Drawing.Point(322, 134);
+            this.buttonRightLimit.Location = new System.Drawing.Point(451, 562);
             this.buttonRightLimit.Name = "buttonRightLimit";
             this.buttonRightLimit.Size = new System.Drawing.Size(70, 24);
             this.buttonRightLimit.TabIndex = 14;
@@ -263,7 +355,7 @@ namespace TheOneCameraControl
             // 
             // buttonLeftLimit
             // 
-            this.buttonLeftLimit.Location = new System.Drawing.Point(28, 134);
+            this.buttonLeftLimit.Location = new System.Drawing.Point(157, 562);
             this.buttonLeftLimit.Name = "buttonLeftLimit";
             this.buttonLeftLimit.Size = new System.Drawing.Size(70, 24);
             this.buttonLeftLimit.TabIndex = 15;
@@ -272,7 +364,7 @@ namespace TheOneCameraControl
             // 
             // buttonUpLimit
             // 
-            this.buttonUpLimit.Location = new System.Drawing.Point(155, 47);
+            this.buttonUpLimit.Location = new System.Drawing.Point(284, 504);
             this.buttonUpLimit.Name = "buttonUpLimit";
             this.buttonUpLimit.Size = new System.Drawing.Size(120, 24);
             this.buttonUpLimit.TabIndex = 16;
@@ -281,7 +373,7 @@ namespace TheOneCameraControl
             // 
             // buttonDownLimit
             // 
-            this.buttonDownLimit.Location = new System.Drawing.Point(155, 218);
+            this.buttonDownLimit.Location = new System.Drawing.Point(284, 620);
             this.buttonDownLimit.Name = "buttonDownLimit";
             this.buttonDownLimit.Size = new System.Drawing.Size(120, 24);
             this.buttonDownLimit.TabIndex = 17;
@@ -290,7 +382,7 @@ namespace TheOneCameraControl
             // 
             // buttonZoomOutFull
             // 
-            this.buttonZoomOutFull.Location = new System.Drawing.Point(8, 333);
+            this.buttonZoomOutFull.Location = new System.Drawing.Point(129, 687);
             this.buttonZoomOutFull.Name = "buttonZoomOutFull";
             this.buttonZoomOutFull.Size = new System.Drawing.Size(120, 24);
             this.buttonZoomOutFull.TabIndex = 23;
@@ -299,7 +391,7 @@ namespace TheOneCameraControl
             // 
             // buttonZoomInFull
             // 
-            this.buttonZoomInFull.Location = new System.Drawing.Point(8, 242);
+            this.buttonZoomInFull.Location = new System.Drawing.Point(129, 601);
             this.buttonZoomInFull.Name = "buttonZoomInFull";
             this.buttonZoomInFull.Size = new System.Drawing.Size(120, 23);
             this.buttonZoomInFull.TabIndex = 22;
@@ -308,7 +400,7 @@ namespace TheOneCameraControl
             // 
             // buttonZoomOut
             // 
-            this.buttonZoomOut.Location = new System.Drawing.Point(8, 305);
+            this.buttonZoomOut.Location = new System.Drawing.Point(129, 659);
             this.buttonZoomOut.Name = "buttonZoomOut";
             this.buttonZoomOut.Size = new System.Drawing.Size(120, 24);
             this.buttonZoomOut.TabIndex = 21;
@@ -317,7 +409,7 @@ namespace TheOneCameraControl
             // 
             // buttonZoomIn
             // 
-            this.buttonZoomIn.Location = new System.Drawing.Point(8, 270);
+            this.buttonZoomIn.Location = new System.Drawing.Point(129, 629);
             this.buttonZoomIn.Name = "buttonZoomIn";
             this.buttonZoomIn.Size = new System.Drawing.Size(120, 24);
             this.buttonZoomIn.TabIndex = 20;
@@ -326,7 +418,7 @@ namespace TheOneCameraControl
             // 
             // buttonFastLeft
             // 
-            this.buttonFastLeft.Location = new System.Drawing.Point(297, 333);
+            this.buttonFastLeft.Location = new System.Drawing.Point(436, 698);
             this.buttonFastLeft.Name = "buttonFastLeft";
             this.buttonFastLeft.Size = new System.Drawing.Size(103, 24);
             this.buttonFastLeft.TabIndex = 24;
@@ -335,7 +427,7 @@ namespace TheOneCameraControl
             // 
             // buttonFastRight
             // 
-            this.buttonFastRight.Location = new System.Drawing.Point(290, 305);
+            this.buttonFastRight.Location = new System.Drawing.Point(429, 670);
             this.buttonFastRight.Name = "buttonFastRight";
             this.buttonFastRight.Size = new System.Drawing.Size(110, 24);
             this.buttonFastRight.TabIndex = 25;
@@ -344,7 +436,7 @@ namespace TheOneCameraControl
             // 
             // buttonFastDown
             // 
-            this.buttonFastDown.Location = new System.Drawing.Point(297, 233);
+            this.buttonFastDown.Location = new System.Drawing.Point(429, 601);
             this.buttonFastDown.Name = "buttonFastDown";
             this.buttonFastDown.Size = new System.Drawing.Size(110, 24);
             this.buttonFastDown.TabIndex = 27;
@@ -353,7 +445,7 @@ namespace TheOneCameraControl
             // 
             // buttonFastUp
             // 
-            this.buttonFastUp.Location = new System.Drawing.Point(297, 261);
+            this.buttonFastUp.Location = new System.Drawing.Point(429, 629);
             this.buttonFastUp.Name = "buttonFastUp";
             this.buttonFastUp.Size = new System.Drawing.Size(103, 24);
             this.buttonFastUp.TabIndex = 26;
@@ -362,7 +454,7 @@ namespace TheOneCameraControl
             // 
             // textPort
             // 
-            this.textPort.Location = new System.Drawing.Point(160, 385);
+            this.textPort.Location = new System.Drawing.Point(290, 730);
             this.textPort.Name = "textPort";
             this.textPort.Size = new System.Drawing.Size(62, 20);
             this.textPort.TabIndex = 28;
@@ -372,7 +464,7 @@ namespace TheOneCameraControl
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(130, 387);
+            this.label1.Location = new System.Drawing.Point(260, 732);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(29, 13);
             this.label1.TabIndex = 29;
@@ -381,7 +473,7 @@ namespace TheOneCameraControl
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(160, 422);
+            this.label2.Location = new System.Drawing.Point(290, 767);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(76, 13);
             this.label2.TabIndex = 30;
@@ -389,15 +481,72 @@ namespace TheOneCameraControl
             // 
             // textLastMessage
             // 
-            this.textLastMessage.Location = new System.Drawing.Point(234, 420);
+            this.textLastMessage.Location = new System.Drawing.Point(364, 765);
             this.textLastMessage.Name = "textLastMessage";
             this.textLastMessage.Size = new System.Drawing.Size(175, 20);
             this.textLastMessage.TabIndex = 31;
             // 
+            // cameraGridView
+            // 
+            this.cameraGridView.AllowDrop = true;
+            this.cameraGridView.AllowUserToAddRows = false;
+            this.cameraGridView.AllowUserToDeleteRows = false;
+            this.cameraGridView.AllowUserToResizeRows = false;
+            this.cameraGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.cameraGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.CameraNumber,
+            this.SystemCameraNumber,
+            this.Camera,
+            this.DevicePath});
+            this.cameraGridView.Location = new System.Drawing.Point(12, 50);
+            this.cameraGridView.MultiSelect = false;
+            this.cameraGridView.Name = "cameraGridView";
+            this.cameraGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.cameraGridView.Size = new System.Drawing.Size(781, 448);
+            this.cameraGridView.TabIndex = 32;
+            // 
+            // CameraNumber
+            // 
+            this.CameraNumber.HeaderText = "Camera #";
+            this.CameraNumber.Name = "CameraNumber";
+            this.CameraNumber.ReadOnly = true;
+            this.CameraNumber.Width = 60;
+            // 
+            // SystemCameraNumber
+            // 
+            this.SystemCameraNumber.HeaderText = "System Camera #";
+            this.SystemCameraNumber.Name = "SystemCameraNumber";
+            this.SystemCameraNumber.ReadOnly = true;
+            this.SystemCameraNumber.Width = 60;
+            // 
+            // Camera
+            // 
+            this.Camera.HeaderText = "Camera";
+            this.Camera.Name = "Camera";
+            this.Camera.Width = 140;
+            // 
+            // DevicePath
+            // 
+            this.DevicePath.HeaderText = "Device Path";
+            this.DevicePath.Name = "DevicePath";
+            this.DevicePath.Width = 400;
+            // 
+            // PurgeRedItemsButton
+            // 
+            this.PurgeRedItemsButton.Location = new System.Drawing.Point(401, 12);
+            this.PurgeRedItemsButton.Name = "PurgeRedItemsButton";
+            this.PurgeRedItemsButton.Size = new System.Drawing.Size(170, 24);
+            this.PurgeRedItemsButton.TabIndex = 33;
+            this.PurgeRedItemsButton.Text = "Purge Missing Devices (Red)";
+            this.PurgeRedItemsButton.Click += new System.EventHandler(this.PurgeRedItemsButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(657, 671);
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.ClientSize = new System.Drawing.Size(805, 798);
+            this.Controls.Add(this.PurgeRedItemsButton);
+            this.Controls.Add(this.cameraGridView);
             this.Controls.Add(this.textLastMessage);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -422,11 +571,11 @@ namespace TheOneCameraControl
             this.Controls.Add(this.buttonStartServer);
             this.Controls.Add(this.buttonStopServer);
             this.Controls.Add(this.buttonDump);
-            this.Controls.Add(this.comboDevice);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
             this.Text = "The One Camera Controller";
+            ((System.ComponentModel.ISupportInitialize)(this.cameraGridView)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -451,8 +600,8 @@ namespace TheOneCameraControl
             buttonStartServer.Enabled = true;
             buttonStopServer.Enabled = false;
             textPort.Enabled = true;
-            if (camControl != null)
-                camControl.stop();
+            if (oscReceiver != null)
+                oscReceiver.stop();
             return;
         }
 
@@ -461,9 +610,120 @@ namespace TheOneCameraControl
             buttonStartServer.Enabled = false;
             buttonStopServer.Enabled = true;
             textPort.Enabled = false;
-            camControl = new CameraControl(int.Parse(this.textPort.Text), this);
+            oscReceiver = new OSCReceiver(int.Parse(this.textPort.Text), this);
 
             return;
+        }
+
+        // Function to load and compare data and highlight rows accordingly
+        private void LoadAndCompareData(DataGridView dataGridView, string filePath)
+        {
+            // Load the data from the JSON file
+            List<Dictionary<string, object>> loadedData = LoadDataFromJson(filePath);
+
+            // Get the current system data
+            List<Dictionary<string, object>> currentSystemData = DataGridViewToDictList(dataGridView);
+
+            // Find missing devices and new devices
+            List<Dictionary<string, object>> missingDevices = new List<Dictionary<string, object>>();
+            List<Dictionary<string, object>> newDevices = new List<Dictionary<string, object>>();
+
+            // Assuming the DevicePath column is the unique identifier for each device
+            HashSet<string> loadedDevicePaths = new HashSet<string>();
+            HashSet<string> currentDevicePaths = new HashSet<string>();
+
+            foreach (var device in loadedData)
+            {
+                loadedDevicePaths.Add(device["DevicePath"].ToString());
+            }
+
+            foreach (var device in currentSystemData)
+            {
+                currentDevicePaths.Add(device["DevicePath"].ToString());
+            }
+
+            // Find missing devices
+            foreach (var device in loadedData)
+            {
+                if (!currentDevicePaths.Contains(device["DevicePath"].ToString()))
+                {
+                    missingDevices.Add(device);
+                }
+            }
+
+            // Find new devices
+            foreach (var device in currentSystemData)
+            {
+                if (!loadedDevicePaths.Contains(device["DevicePath"].ToString()))
+                {
+                    newDevices.Add(device);
+                }
+            }
+
+            // Combine the data and load it into the DataGridView
+            List<Dictionary<string, object>> finalData = new List<Dictionary<string, object>>(loadedData);
+            finalData.AddRange(newDevices);
+
+            dataGridView.Rows.Clear();
+
+            foreach (var rowData in finalData)
+            {
+                int rowIndex = dataGridView.Rows.Add();
+                DataGridViewRow row = dataGridView.Rows[rowIndex];
+
+                foreach (DataGridViewColumn column in dataGridView.Columns)
+                {
+                    if (rowData.ContainsKey(column.Name))
+                    {
+                        row.Cells[column.Name].Value = rowData[column.Name];
+                    }
+                }
+
+                // Highlight the row based on its status
+                if (missingDevices.Contains(rowData))
+                {
+                    row.DefaultCellStyle.BackColor = Color.Red;
+                }
+                else if (newDevices.Contains(rowData))
+                {
+                    row.DefaultCellStyle.BackColor = Color.Green;
+                }
+            }
+
+            UpdateSystemCameraNumber(cameraGridView);
+        }
+
+        private void UpdateSystemCameraNumber(DataGridView dataGridView)
+        {
+            // Iterate through all rows in the DataGridView
+            foreach (DataGridViewRow row in dataGridView.Rows)
+            {
+
+                // Retrieve the DevicePath value (or any other value you need for your criteria)
+                string devicePath = row.Cells["DevicePath"].Value.ToString();
+
+                // Update the SystemCameraNumber based on your criteria
+                // Replace this with your actual implementation to get the new SystemCameraNumber
+                int newSystemCameraNumber = GetSystemCameraNumberByDevicePath(devicePath);
+
+                // Set the new SystemCameraNumber value for the row
+                row.Cells["SystemCameraNumber"].Value = newSystemCameraNumber;
+
+            }
+        }
+
+        // Function to load data from a JSON file and return a list of dictionaries
+        private List<Dictionary<string, object>> LoadDataFromJson(string filePath)
+        {
+            List<Dictionary<string, object>> data = new List<Dictionary<string, object>>();
+
+            if (File.Exists(filePath))
+            {
+                var json = File.ReadAllText(filePath);
+                data = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(json);
+            }
+
+            return data;
         }
 
         private IBaseFilter CreateFilter(Guid category, string dpath)
@@ -481,6 +741,67 @@ namespace TheOneCameraControl
 
             return (IBaseFilter)source;
         }
+
+        // Function to convert DataGridView to a list of dictionaries
+        private List<Dictionary<string, object>> DataGridViewToDictList(DataGridView dataGridView)
+        {
+            var dictList = new List<Dictionary<string, object>>();
+
+            foreach (DataGridViewRow row in dataGridView.Rows)
+            {
+                if (row.IsNewRow) continue;
+                var rowData = new Dictionary<string, object>();
+                foreach (DataGridViewCell cell in row.Cells)
+                    rowData[dataGridView.Columns[cell.ColumnIndex].Name] = cell.Value;
+                dictList.Add(rowData);
+            }
+
+            return dictList;
+        }
+
+        // Function to save DataGridView data to a JSON file
+        private void SaveDataGridViewToJson(DataGridView dataGridView, string filePath)
+        {
+            var data = DataGridViewToDictList(dataGridView);
+            var json = JsonConvert.SerializeObject(data, Formatting.Indented);
+            File.WriteAllText(filePath, json);
+        }
+
+        // Function to load DataGridView data from a JSON file
+        private void LoadDataGridViewFromJson(DataGridView dataGridView, string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                var json = File.ReadAllText(filePath);
+                var data = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(json);
+
+                dataGridView.Rows.Clear();
+
+                foreach (var rowData in data)
+                {
+                    var row = new DataGridViewRow();
+                    row.CreateCells(dataGridView);
+
+                    foreach (var cellData in rowData)
+                    {
+                        if (dataGridView.Columns.Contains(cellData.Key))
+                        {
+                            // Use the column index instead of the column name
+                            int columnIndex = dataGridView.Columns[cellData.Key].Index;
+                            row.Cells[columnIndex].Value = cellData.Value;
+                        }
+                        else
+                        {
+                            // You can either ignore the missing column or add some error handling logic here
+                        }
+                    }
+
+                    dataGridView.Rows.Add(row);
+                }
+            }
+        }
+
+
 
         public static async Task PostDataAsync(string url, object data)
         {
@@ -538,7 +859,7 @@ namespace TheOneCameraControl
 
                 for (int i = 0; i <= 100; i++)
                 {
-                    
+
 
                     int result = cameraControl.GetRange((CameraControlProperty)i,
                         out int min, out int max, out int steppingDelta,
@@ -633,33 +954,6 @@ namespace TheOneCameraControl
         private void buttonStopServer_Click(object sender, System.EventArgs e)
         {
             StopServer();
-        }
-
-        private void comboDevice_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            string devicepath = "none";
-
-            //Release COM objects
-            if (theDevice != null)
-            {
-                Marshal.ReleaseComObject(theDevice);
-                theDevice = null;
-            }
-            //Create the filter for the selected video input device
-            try
-            {
-                if (comboDevice.Items.Count > 0)
-                {
-                    devicepath = (string)comboDevice.SelectedValue;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-            theDevice = CreateFilter(FilterCategory.VideoInputDevice, devicepath);
-            theDevicePath = devicepath;
         }
 
         private void buttonUp_Click(object sender, EventArgs e)
@@ -897,13 +1191,278 @@ namespace TheOneCameraControl
             Console.WriteLine($"Property 10: value: {value}");
 
         }
+
+        public void SelectDeviceByCameraNumber(int cameraNumber)
+        {
+            foreach (DataGridViewRow row in cameraGridView.Rows)
+            {
+                if (row.Cells["CameraNumber"].Value != null && int.Parse(row.Cells["CameraNumber"].Value.ToString()) == cameraNumber)
+                {
+                    row.Selected = true;
+                    theDevicePath = row.Cells["DevicePath"].Value.ToString();
+                    theDevice = CreateFilter(FilterCategory.VideoInputDevice, theDevicePath);
+                    Console.WriteLine($"Selected device: {theDevicePath}");
+                    return;
+                }
+            }
+        }
+
+        public void SelectDeviceBySystemCameraNumber(int cameraNumber)
+        {
+            foreach (DataGridViewRow row in cameraGridView.Rows)
+            {
+                if (row.Cells["SystemCameraNumber"].Value != null && (int)row.Cells["SystemCameraNumber"].Value == cameraNumber)
+                {
+                    row.Selected = true;
+                    theDevicePath = row.Cells["DevicePath"].Value.ToString();
+                    theDevice = CreateFilter(FilterCategory.VideoInputDevice, theDevicePath);
+                    return;
+                }
+            }
+        }
+
+        public void SelectDeviceByDevicePath(string devicePath)
+        {
+            foreach (DataGridViewRow row in cameraGridView.Rows)
+            {
+                if (row.Cells["DevicePath"].Value != null && row.Cells["DevicePath"].Value.ToString() == devicePath)
+                {
+                    row.Selected = true;
+                    theDevicePath = devicePath;
+                    theDevice = CreateFilter(FilterCategory.VideoInputDevice, theDevicePath);
+                    return;
+                }
+            }
+
+        }
+
+        public int GetSystemCameraNumberByDevicePath(string devicePath)
+        {
+            foreach (DataGridViewRow row in cameraGridView.Rows)
+            {
+                if (row.Cells["DevicePath"].Value != null && row.Cells["DevicePath"].Value.ToString() == devicePath)
+                {
+                    int systemCameraNumber;
+                    if (int.TryParse(row.Cells["SystemCameraNumber"].Value.ToString(), out systemCameraNumber))
+                    {
+                        return systemCameraNumber;
+                    }
+                }
+            }
+
+            // If the device path is not found, return -1 or throw an exception
+            return -1;
+        }
+
+        public int GetCameraNumberByDevicePath(string devicePath)
+        {
+            foreach (DataGridViewRow row in cameraGridView.Rows)
+            {
+                if (row.Cells["DevicePath"].Value != null && row.Cells["DevicePath"].Value.ToString() == devicePath)
+                {
+                    int cameraNumber;
+                    if (int.TryParse(row.Cells["CameraNumber"].Value.ToString(), out cameraNumber))
+                    {
+                        return cameraNumber;
+                    }
+                }
+            }
+
+            // If the device path is not found, return -1 or throw an exception
+            return -1;
+        }
+
+        private void CameraGridView_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+
+            // Select the whole row when a cell is clicked
+            if (e.RowIndex >= 0 && e.Button == MouseButtons.Left)
+            {
+                DataGridViewRow selectedRow = cameraGridView.Rows[e.RowIndex];
+                cameraGridView.ClearSelection();
+                selectedRow.Selected = true;
+                cameraGridView.CurrentCell = cameraGridView.Rows[e.RowIndex].Cells[0];
+
+                theDevicePath = selectedRow.Cells["DevicePath"].Value.ToString();
+                Console.WriteLine($"Device Path: {theDevicePath}");
+                theDevice = CreateFilter(FilterCategory.VideoInputDevice, theDevicePath);
+            }
+        }
+
+        private int rowIndex = -1;
+        private Rectangle dragBoxFromMouseDown;
+
+        private void CameraGridView_MouseDown(object sender, MouseEventArgs e)
+        {
+            rowIndex = cameraGridView.HitTest(e.X, e.Y).RowIndex;
+            if (rowIndex >= 0)
+            {
+                Size dragSize = SystemInformation.DragSize;
+                dragBoxFromMouseDown = new Rectangle(new Point(e.X - (dragSize.Width / 2), e.Y - (dragSize.Height / 2)), dragSize);
+            }
+            else
+            {
+                dragBoxFromMouseDown = Rectangle.Empty;
+            }
+        }
+
+        private void CameraGridView_MouseMove(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & MouseButtons.Left) == MouseButtons.Left && dragBoxFromMouseDown != Rectangle.Empty && !dragBoxFromMouseDown.Contains(e.X, e.Y))
+            {
+                cameraGridView.DoDragDrop(cameraGridView.Rows[rowIndex], DragDropEffects.Move);
+            }
+        }
+
+        private void CameraGridView_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+
+        private void CameraGridView_DragDrop(object sender, DragEventArgs e)
+        {
+            Point clientPoint = cameraGridView.PointToClient(new Point(e.X, e.Y));
+            int destinationIndex = cameraGridView.HitTest(clientPoint.X, clientPoint.Y).RowIndex;
+            if (destinationIndex >= 0 && destinationIndex != rowIndex)
+            {
+                DataGridViewRow rowToMove = e.Data.GetData(typeof(DataGridViewRow)) as DataGridViewRow;
+                cameraGridView.Rows.RemoveAt(rowIndex);
+                cameraGridView.Rows.Insert(destinationIndex, rowToMove);
+                reorderCameras();
+                SaveDataGridViewToJson(cameraGridView, "config.json");
+            }
+        }
+
+        private void reorderCameras()
+        {
+            for (int i = 0; i < cameraGridView.Rows.Count; i++)
+            {
+                cameraGridView.Rows[i].Cells["CameraNumber"].Value = i + 1;
+            }
+            UpdateSystemCameraNumber(cameraGridView);
+        }
+
+        private void PurgeRedItemsButton_Click(object sender, EventArgs e)
+        {
+            // Loop through the rows in reverse order to avoid issues caused by row indices changing as rows are removed
+            for (int rowIndex = cameraGridView.Rows.Count - 1; rowIndex >= 0; rowIndex--)
+            {
+                DataGridViewRow row = cameraGridView.Rows[rowIndex];
+
+                // Check if the row has a red background
+                if (row.DefaultCellStyle.BackColor == Color.Red)
+                {
+                    // Remove the row from the DataGridView
+                    cameraGridView.Rows.RemoveAt(rowIndex);
+                }
+            }
+            reorderCameras();
+            SaveDataGridViewToJson(cameraGridView, "config.json");
+
+        }
+    }
+
+    public class OSCReceiver
+    {
+        private Form1 _parent = null;
+        private UDPListener _listener = null;
+        private Dictionary<int, CameraControl> _threads;
+
+        public OSCReceiver(int port, Form1 parent)
+        {
+            _parent = parent;
+
+            HandleOscPacket callback = delegate (OscPacket packet)
+            {
+                var message = (OscMessage)packet;
+
+                spawnCameraControl(message);
+            };
+
+            _listener = new UDPListener(port, callback);
+            _threads = new Dictionary<int, CameraControl>();
+        }
+
+        public void stop()
+        {
+            Console.WriteLine("Cleanup OSCReceiver");
+            _listener.Close();
+        }
+
+        public void spawnCameraControl(OscMessage message)
+        {
+            string devicePath = "none";
+            CameraControl result = null;
+            int systemCamera = 1;
+
+            if (message.Address == "/SetCurrentDevice")
+            {
+                int cameraNumber = (int)message.Arguments[0];
+                _parent.SelectDeviceByCameraNumber(cameraNumber);
+                devicePath = _parent.theDevicePath;
+                Console.WriteLine($"Set Device: {devicePath}");
+            }
+            else if (message.Address == "/SendCurrentValuesToEndpoint")
+            {
+                devicePath = _parent.theDevicePath;
+            }
+            else if (message.Address == "/FLYXY" && message.Arguments.Count == 2)
+            {
+                devicePath = _parent.theDevicePath;
+                //Console.WriteLine($"/FLYXY device {devicePath}");
+            }
+            else if (message.Address == "/FLYZ")
+            {
+                devicePath = _parent.theDevicePath;
+            }
+            else if (message.Arguments[0] is string)
+            {
+                devicePath = (string)message.Arguments[0];
+                _parent.SelectDeviceByDevicePath(devicePath);
+                Console.WriteLine($"Device: {devicePath}");
+            }
+            else
+            {
+                int cameraNumber = (int)message.Arguments[0];
+                _parent.SelectDeviceByCameraNumber(cameraNumber);
+                devicePath = _parent.theDevicePath;
+            }
+
+            systemCamera = _parent.GetSystemCameraNumberByDevicePath(devicePath);
+
+            //Console.WriteLine($"System Camera Number: {systemCamera} Device Path: {devicePath}");
+
+            if (_threads.TryGetValue(systemCamera, out result))
+            {
+                result.receiveOSC(message);
+            }
+            else
+            {
+                CameraControl cc = new CameraControl(_parent, devicePath);
+                cc.Start();
+                cc.setDevice(devicePath);
+                cc.receiveOSC(message);
+                _threads.Add(systemCamera, cc);
+            }
+
+            //Console.WriteLine($"Total Threads: {_threads.Count}");
+            // Remove completed threads
+
+            //}
+            //_threads.RemoveAll(t => !t.IsAlive);
+        }
     }
 
     public class CameraControl
     {
+        private Form1 _parent = null;
+
+        private Thread _thread = null;
+
         private IBaseFilter theDevice = null;
         string theDevicePath = "unbound";
         private IAMCameraControl cameraControl = null;
+
         private int lastX = 0;
         private int lastY = 0;
         private int lastZ = 0;
@@ -972,8 +1531,13 @@ namespace TheOneCameraControl
 
         private bool gotoActive = false;
 
-        private Form1 _parent = null;
-        private UDPListener _listener = null;
+        private bool zoomActive = false;
+
+        double messageReceivedTimeTicks = 0;
+
+        string remoteIPAddress;
+        int remotePort;
+
 
         // For sending data out to Splunk in real-time.
         private TcpClient _tcpoutClient = null;
@@ -981,19 +1545,13 @@ namespace TheOneCameraControl
         private NetworkStream _tcpoutStream = null;
         DateTimeOffset epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
-        Boolean isSetup = false;
-        public CameraControl(int port, Form1 parent)
+        public CameraControl(Form1 parent, string devicePath)
         {
             _parent = parent;
 
-            HandleOscPacket callback = delegate (OscPacket packet)
-            {
-                var messageReceived = (OscMessage)packet;
+            setDevice(devicePath);
+            _thread = new Thread(new ThreadStart(cameraControlLoop));
 
-                receiveOSC(messageReceived);
-            };
-
-            _listener = new UDPListener(port, callback);
             _tcpoutClient = new TcpClient("10.1.10.173", 30000);
             _tcpoutStream = _tcpoutClient.GetStream();
         }
@@ -1013,7 +1571,7 @@ namespace TheOneCameraControl
                         theDevicePath = device.DevicePath;
                         theDevice = (IBaseFilter)source;
                         cameraControl = theDevice as IAMCameraControl;
-                        Console.WriteLine($"MS to find and set device: {(int)((DateTime.UtcNow.Ticks - startTimeTicks) / 10000)}ms");
+                        Console.WriteLine($"MS to find and set device: {(int)((DateTime.UtcNow.Ticks - startTimeTicks) / 10000)}ms {theDevicePath}");
                     }
                     catch (Exception ex)
                     {
@@ -1026,51 +1584,40 @@ namespace TheOneCameraControl
             }
         }
 
-        public void stop()
+        public void Stop()
         {
             Console.WriteLine("Cleanup on isle 7");
-            _listener.Close();
             _tcpoutClient.Close();
         }
-        private void receiveOSC(OscMessage message)
+
+        // Start the thread
+        public void Start()
         {
+            Console.WriteLine("Start()");
+            _thread.Start();
+        }
+
+        // Wait for the thread to complete
+        public void Join()
+        {
+            _thread.Join();
+        }
+
+        public bool IsAlive
+        {
+            get { return _thread.IsAlive; }
+        }
+
+        public void receiveOSC(OscMessage message)
+        {
+            messageReceivedTimeTicks = DateTime.UtcNow.Ticks;
             string address = message.Address;
-            string remoteIPAddress = message.remoteIPAddress;
-            int remotePort = message.remotePort;
+            remoteIPAddress = message.remoteIPAddress;
+            remotePort = message.remotePort;
 
-            Console.WriteLine($"Remote: {remoteIPAddress}:{remotePort}");
+            //Console.WriteLine($"Remote: {remoteIPAddress}:{remotePort}");
 
-            if (!isSetup)
-            {
-                object source = null;
-                Guid iid = typeof(IBaseFilter).GUID;
-                foreach (DsDevice device in DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice))
-                {
-                    if (device.DevicePath.CompareTo(_parent.theDevicePath) == 0)
-                    {
-                        try
-                        {
-                            device.Mon.BindToObject(null, null, ref iid, out source);
-                            theDevicePath = device.DevicePath;
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"device failed: {ex}:");
-                            //Console.WriteLine(ex.ToString());
-                            continue;
-                        }
-                        break;
-                    }
-                }
-                theDevice = (IBaseFilter)source;
-                cameraControl = theDevice as IAMCameraControl;
-                isSetup = true;
-
-                Thread workerThread = new Thread(new ThreadStart(cameraControlLoop));
-                // Start secondary thread
-                workerThread.Start();
-            }
-            else if (cameraControl != null)
+            if (cameraControl != null)
             {
                 if (address == "/GetCurrentValues")
                 {
@@ -1092,8 +1639,9 @@ namespace TheOneCameraControl
                 }
                 else if (address == "/SendCurrentValuesToEndpoint")
                 {
+                    Console.WriteLine($"/SendCurrentValuesToEndpoint");
                     // Must have at least one value passed.
-                    remoteIPAddress = (string)message.Arguments[0]; 
+                    remoteIPAddress = (string)message.Arguments[0];
                     remotePort = (int)message.Arguments[1];
 
                     cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
@@ -1104,17 +1652,10 @@ namespace TheOneCameraControl
                     Console.WriteLine($"Sending Current PTZ: {currentPan} {currentTilt} {currentZoom} {currentFocus}");
                     Console.WriteLine($"To: {remoteIPAddress}:{remotePort}\n");
 
-                    var responseMessage = new SharpOSC.OscMessage("/CurrentValues", currentPan, currentTilt, currentZoom, currentFocus, theDevicePath);
+                    var cameraNumber = _parent.GetCameraNumberByDevicePath(theDevicePath);
+                    var responseMessage = new SharpOSC.OscMessage("/CurrentValues", cameraNumber, currentPan, currentTilt, currentZoom, currentFocus);
                     var sender = new SharpOSC.UDPSender(remoteIPAddress, remotePort);
-
                     sender.Send(responseMessage);
-                }
-                else if (address == "/SetCurrentDevice")
-                {
-                    // Must have at least one value passed.
-                    string devicePath = (string)message.Arguments[0];
-                    setDevice(devicePath);
-                    Console.WriteLine($"Set Device: {devicePath}");
                 }
                 else if (address == "/FLYXY")
                 {
@@ -1136,6 +1677,19 @@ namespace TheOneCameraControl
                 else if (address == "/FLYZ")
                 {
                     int valueZ = (int)message.Arguments[0];
+                    remoteIPAddress = (string)message.Arguments[1];
+                    remotePort = (int)message.Arguments[2];
+
+                    if (valueZ != 0)
+                    {
+                        Console.WriteLine($"zoomActive=true");
+                        zoomActive = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"zoomActive=false");
+                        zoomActive = false;
+                    }
 
                     if (Math.Abs(lastZ - valueZ) > 5)
                     {
@@ -1143,12 +1697,10 @@ namespace TheOneCameraControl
                         lastZ = valueZ;
                     }
 
-
                     //_parent.textLastMessage.Invoke((MethodInvoker)delegate
                     //{
                     //    _parent.textLastMessage.Text = $"{address} {lastZ}";
                     //});
-
                 }
                 else if (address == "/PAN")
                 {
@@ -1196,16 +1748,10 @@ namespace TheOneCameraControl
                 {
                     Console.Write($"Arguments: {message.Arguments.Count}");
 
-                    destPan = (int)message.Arguments[0];
-                    destTilt = (int)message.Arguments[1];
-                    destZoom = (int)message.Arguments[2];
-                    movementSpeed = (int)message.Arguments[3];
-                    if(message.Arguments.Count > 4)
-                    {
-                        theDevicePath = (string)message.Arguments[4];
-                        setDevice(theDevicePath);
-                        
-                    }
+                    destPan = (int)message.Arguments[1];
+                    destTilt = (int)message.Arguments[2];
+                    destZoom = (int)message.Arguments[3];
+                    movementSpeed = (int)message.Arguments[4];
 
                     PTZS(0);
 
@@ -1289,7 +1835,8 @@ namespace TheOneCameraControl
             return x * x;
         }
 
-        public double easeOutQuint(double x) {
+        public double easeOutQuint(double x)
+        {
             return 1 - Math.Pow(1 - x, 5);
         }
 
@@ -1310,9 +1857,9 @@ namespace TheOneCameraControl
                 calculatedTiltSpeed = movementSpeed;
                 calculatedZoomSpeed = movementSpeed;
 
-                calculatedPanEndSpeed = movementSpeed/2;
-                calculatedTiltEndSpeed = movementSpeed/2;
-                calculatedZoomEndSpeed = movementSpeed/2;
+                calculatedPanEndSpeed = movementSpeed / 2;
+                calculatedTiltEndSpeed = movementSpeed / 2;
+                calculatedZoomEndSpeed = movementSpeed / 2;
 
                 Console.WriteLine($"Current PTZ: {currentPan} {currentTilt} {currentZoom} \n");
 
@@ -1456,13 +2003,27 @@ namespace TheOneCameraControl
 
         public void cameraControlLoop()
         {
-            long lastTimeStamp = DateTime.UtcNow.Ticks;
+            long lastTimeTicks = DateTime.UtcNow.Ticks;
+           
             try
             {
                 while (true)
                 {
-                    lastTimeStamp = DateTime.UtcNow.Ticks;
-                    if (gotoActive)
+                    lastTimeTicks = DateTime.UtcNow.Ticks;
+
+                    if (zoomActive)
+                    {
+                        cameraControl.Get(CameraControlProperty.Zoom, out int currentZoom, out var flags3);
+
+                        if (currentZoom != lastZ)
+                        {
+                            int cameraNumber = _parent.GetCameraNumberByDevicePath(theDevicePath);
+                            var responseMessage = new SharpOSC.OscMessage("/CurrentZoom", cameraNumber, currentZoom);
+                            var sender = new SharpOSC.UDPSender("127.0.0.1", 4334);
+                            sender.Send(responseMessage);
+                        }
+                    }
+                    else if (gotoActive)
                     {
                         cameraControl.Get(CameraControlProperty.Pan, out int currentPan, out var flags1);
                         cameraControl.Get(CameraControlProperty.Tilt, out int currentTilt, out var flags2);
@@ -1572,7 +2133,7 @@ namespace TheOneCameraControl
 
                         //double nowEpochMS = ((double)(DateTime.UtcNow.Ticks) / 10000.0)/1000.0;
 
-                        double nowEpochMS = ((double)(DateTimeOffset.UtcNow - epoch).TotalMilliseconds)/1000.0;
+                        double nowEpochMS = ((double)(DateTimeOffset.UtcNow - epoch).TotalMilliseconds) / 1000.0;
 
                         Console.WriteLine($"{nowEpochMS:0000000000.000} panSpeed={panSpeed} tiltSpeed={tiltSpeed} zoomSpeed={zoomSpeed}");
 
@@ -1714,7 +2275,7 @@ namespace TheOneCameraControl
                     //stopTilt = false;
                     //stopZoom = false;
 
-                    Thread.Sleep(50);
+                    Thread.Sleep(33);
                     //Console.WriteLine($"Ticks per loop: {DateTime.UtcNow.Ticks - lastTimeStamp}");
                 }
 
